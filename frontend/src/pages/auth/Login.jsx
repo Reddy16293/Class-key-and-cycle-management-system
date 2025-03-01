@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Mail } from "lucide-react";
-import {} from "../../images/img1.jpg"
+
 const backgrounds = [
-  "url('../../images/img1.jpg')",
-  "url('/images/bg2.jpg')",
-  "url('/images/bg3.jpg')",
-  "url('/images/bg4.jpg')"
+  "url('https://tse3.mm.bing.net/th?id=OIP.HzGwGuEGVuQcjAYvJpi13wHaEK&pid=Api&P=0&h=180')",
+  "url('https://tse3.mm.bing.net/th?id=OIP.Bmo1Zl8H5ZrCR16Fz8QaLAHaCe&pid=Api&P=0&h=180')",
+  "url('https://tse3.mm.bing.net/th?id=OIP.YLOnTTu4W-vZEV89euok3QHaEK&pid=Api&P=0&h=180')"
 ];
 
 const Login = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [bgIndex, setBgIndex] = useState(0);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,9 +28,21 @@ const Login = () => {
     navigate("/dashboard/student");
   };
 
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
-    navigate("/dashboard/admin");
+    try {
+      const response = await axios.post("http://localhost:8080/api/admins/login", {
+        username,
+        password
+      });
+      
+      if (response.status === 200) {
+        // Login successful, navigate to admin dashboard
+        navigate("/dashboard/admin");
+      }
+    } catch (error) {
+      setError("Invalid username or password");
+    }
   };
 
   return (
@@ -78,6 +93,8 @@ const Login = () => {
                   role="textbox"
                   aria-label="Admin Username"
                   type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   placeholder="Username"
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -86,11 +103,14 @@ const Login = () => {
                   role="textbox"
                   aria-label="Admin Password"
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              {error && <p className="text-red-500">{error}</p>}
               <button
                 role="button"
                 aria-label="Admin Sign In"
