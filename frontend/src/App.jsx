@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/auth/Login";
+import AdminDashboard from "./pages/dashboard/Admindashboard";
+import StudentDashboard from "./pages/dashboard/StudentDashboard";
 
 const Dashboard = () => <h2 className="text-center text-3xl mt-10">Welcome to Dashboard</h2>;
 
@@ -10,8 +12,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/student" element={<h2 className="text-center text-3xl mt-10">Welcome Student</h2>} />
-        <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} />
+        <Route path="/dashboard/Admin" element={< AdminDashboard />} />
+        <Route path="/dashboard/student" element={< StudentDashboard />} />
+        {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}
       </Routes>
     
   );
