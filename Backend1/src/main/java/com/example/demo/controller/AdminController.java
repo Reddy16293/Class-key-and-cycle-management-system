@@ -1,29 +1,29 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.Admin;
-import com.example.demo.service.IAdminService;
+//AdminController.java
+
+
+import com.example.demo.model.User;
+import com.example.demo.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/admin")
 public class AdminController {
 
-    @Autowired
-    private IAdminService adminService;
+ @Autowired
+ private AdminService adminService;
 
-    @PostMapping("/signup")
-    public Admin createAdmin(@RequestBody Admin admin) {
-        return adminService.createAdmin(admin);  // Admin signup (registration)
-    }
+ @PostMapping("/signup")
+ public ResponseEntity<String> signup(@RequestBody User admin) {
+     return adminService.signup(admin);
+ }
 
-    @PostMapping("/login")
-    public Admin loginAdmin(@RequestBody Admin admin) {
-        Admin loggedInAdmin = adminService.loginAdmin(admin.getUsername(), admin.getPassword());
-        if (loggedInAdmin != null) {
-            return loggedInAdmin;  // Return logged-in admin details
-        } else {
-            throw new RuntimeException("Invalid username or password");
-        }
-    }
+ @PostMapping("/login")
+ public ResponseEntity<String> login(@RequestBody User admin) {
+     return adminService.login(admin);
+ }
 }
+
