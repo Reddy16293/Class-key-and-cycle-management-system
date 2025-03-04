@@ -24,21 +24,33 @@ const Login = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleStudentLogin = () => {
-    navigate("/dashboard/student");
+  const handleGoogleLogin = () => {
+    // Simulate Google OAuth2 login and domain verification
+    const userEmail = "student@nitc.ac.in"; // Replace with real authentication logic
+    if (userEmail.endsWith("@nitc.ac.in")) {
+      navigate("/dashboard/student");
+    } else {
+      setError("Only students with @nitc.ac.in domain can sign in.");
+    }
   };
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/admins/login", {
+      const response = await axios.post("http://localhost:8080/api/admin/login", {
         username,
         password
       });
-      
+
       if (response.status === 200) {
-        // Login successful, navigate to admin dashboard
-        navigate("/dashboard/admin");
+        const userRole = response.data.user.role;
+        if (userRole === "ADMIN") {
+          navigate("/dashboard/Admin"); // Navigate to admin dashboard
+        } else if (userRole === "STUDENT") {
+          navigate("/dashboard/student"); // Navigate to student dashboard (optional for future use)
+        } else {
+          setError("Invalid role");
+        }
       }
     } catch (error) {
       setError("Invalid username or password");
@@ -57,41 +69,25 @@ const Login = () => {
         </div>
 
         <div className="space-y-4">
-          {/* Toggle Buttons */}
           <div className="flex justify-center gap-4">
             <button
-              role="button"
-              aria-label="Login as Student"
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                !isAdmin
-                  ? "bg-blue-600 text-white"
-                  : "border border-gray-300 text-gray-600"
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition ${!isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"}`}
               onClick={() => setIsAdmin(false)}
             >
               Student
             </button>
             <button
-              role="button"
-              aria-label="Login as Admin"
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                isAdmin
-                  ? "bg-blue-600 text-white"
-                  : "border border-gray-300 text-gray-600"
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition ${isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"}`}
               onClick={() => setIsAdmin(true)}
             >
               Admin
             </button>
           </div>
 
-          {/* Login Forms */}
           {isAdmin ? (
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-2">
                 <input
-                  role="textbox"
-                  aria-label="Admin Username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -100,8 +96,6 @@ const Login = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
-                  role="textbox"
-                  aria-label="Admin Password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -112,19 +106,18 @@ const Login = () => {
               </div>
               {error && <p className="text-red-500">{error}</p>}
               <button
-                role="button"
-                aria-label="Admin Sign In"
                 type="submit"
                 className="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
               >
                 Sign In
               </button>
+              <p className="text-right text-sm text-blue-600 cursor-pointer hover:underline mt-2">
+                Forgot Password?
+              </p>
             </form>
           ) : (
             <button
-              role="button"
-              aria-label="Sign in with Google as Student"
-              onClick={handleStudentLogin}
+              onClick={handleGoogleLogin}
               className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-200 transition"
             >
               <Mail className="mr-2" />
