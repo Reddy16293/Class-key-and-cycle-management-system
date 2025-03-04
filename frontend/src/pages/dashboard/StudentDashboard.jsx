@@ -1,53 +1,63 @@
-import { StatCard } from "@/components/ui/stat-card";
-import { QuickActions } from "@/components/dashboard/quick-actions";
-import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { Key, Bike, Clock, CalendarClock } from "lucide-react";
+import { useState } from "react";
+import { FaBars, FaKey, FaBicycle, FaEnvelope, FaPaperPlane, FaSignOutAlt, FaUser, FaClock, FaInfoCircle } from "react-icons/fa";
 
 const StudentDashboard = () => {
-  // TODO: Get student role (CR/Non-CR) from auth context
-  const isCR = true;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="container py-8 space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isCR ? "CR Dashboard" : "Student Dashboard"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isCR
-            ? "Manage classroom keys and cycles for your class."
-            : "Book cycles and track your activities."}
-        </p>
+    <div className="h-screen bg-indigo-100 flex flex-col">
+      {/* Navbar */}
+      <div className="bg-indigo-700 text-white p-4 flex justify-between items-center shadow-md">
+        <h1 className="text-xl font-bold">Borrow your resources</h1>
+        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white text-2xl">
+          <FaBars />
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isCR && (
-          <StatCard
-            title="Active Keys"
-            value="3"
-            icon={<Key className="h-8 w-8" />}
-          />
-        )}
-        <StatCard
-          title="Available Cycles"
-          value="15"
-          icon={<Bike className="h-8 w-8" />}
-        />
-        <StatCard
-          title="Active Bookings"
-          value="2"
-          icon={<Clock className="h-8 w-8" />}
-        />
-        <StatCard
-          title="Upcoming Returns"
-          value="1"
-          icon={<CalendarClock className="h-8 w-8" />}
-        />
+      {/* Sidebar (Toggle Menu) */}
+      <div className={`fixed top-0 right-0 w-64 h-full bg-white shadow-md transition-transform duration-300 ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="p-5 space-y-6">
+          <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 text-xl text-indigo-700">
+            ✖
+          </button>
+          <ul className="space-y-4 text-lg">
+            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded">
+              <FaUser className="text-indigo-700" />
+              <span>Profile</span>
+            </li>
+            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded">
+              <FaClock className="text-indigo-700" />
+              <span>View History</span>
+            </li>
+            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded">
+              <FaSignOutAlt className="text-indigo-700" />
+              <span>Sign Out</span>
+            </li>
+            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded">
+              <FaInfoCircle className="text-indigo-700" />
+              <span>About</span>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <QuickActions />
-        <RecentActivity />
+      {/* Content */}
+      <div className="flex flex-col items-center justify-center flex-1 p-10">
+        {/* Action Buttons */}
+        <div className="space-y-6 w-full max-w-md">
+          <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
+            <FaKey className="mr-2" /> Borrow a Class Key
+          </button>
+          <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
+            <FaBicycle className="mr-2" /> Borrow a Bicycle
+          </button>
+          <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
+            <FaEnvelope className="mr-2" /> View Requests
+          </button>
+          <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
+            <FaPaperPlane className="mr-2" /> Sent Requests
+          </button>
+        </div>
       </div>
     </div>
   );
