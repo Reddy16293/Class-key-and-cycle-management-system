@@ -1,6 +1,8 @@
 package com.example.demo.imp;
 
+import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
+import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -48,4 +52,52 @@ public class StudentServiceImpl implements StudentService {
         // Return error if credentials are incorrect or role is invalid
         return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or role"));
     }
+    
+    @Autowired
+    private ClassroomKeyRepository classroomKeyRepository;
+
+    @Override
+    public ResponseEntity<String> bookClassroomKey(Long keyId, User student) {
+        // Use the injected classroomKeyRepository instance to call findById
+        Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
+        if (keyOptional.isPresent()) {
+            ClassroomKey classroomKey = keyOptional.get();
+            if (classroomKey.getIsAvailable()==1) {
+                classroomKey.setIsAvailable(0);  // Mark the key as booked (unavailable)
+                classroomKeyRepository.save(classroomKey);  // Save the updated status
+                return ResponseEntity.ok("Classroom key booked successfully.");
+            } else {
+                return ResponseEntity.status(400).body("Classroom key is already booked.");
+            }
+        } else {
+            return ResponseEntity.status(404).body("Classroom key not found.");
+        }
+    }
+
+    @Override
+    public ResponseEntity<Integer> checkKeyAvailability(Long keyId) {
+        // Again, use classroomKeyRepository instance
+        Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
+        if (keyOptional.isPresent()) {
+            return ResponseEntity.ok(keyOptional.get().getIsAvailable());
+        } else {
+            return ResponseEntity.status(404).body(-1);
+        }
+    }
+    @Override
+    public ResponseEntity<List<Map<String, Object>>> getAvailableRooms() {
+        List<ClassroomKey> availableRooms = classroomKeyRepository.findByIsAvailable(1);
+
+        // Convert ClassroomKey entities to a simpler Map with only necessary details
+        List<Map<String, Object>> response = availableRooms.stream().map(room -> {
+            Map<String, Object> roomDetails = new HashMap<>();
+            roomDetails.put("blockName", room.getBlockName());
+            roomDetails.put("classroomName", room.getClassroomName());
+            roomDetails.put("isAvailable", room.getIsAvailable());
+            return roomDetails;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
 }
