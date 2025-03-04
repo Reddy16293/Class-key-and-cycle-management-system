@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Bicycle;
 import com.example.demo.model.User;
 import com.example.demo.service.StudentService;
 
@@ -28,8 +29,8 @@ public class StudentController {
     }
 
     @PostMapping("/book-classroom-key/{keyId}")
-    public ResponseEntity<String> bookClassroomKey(@PathVariable Long keyId, @RequestBody User student) {
-        return studentService.bookClassroomKey(keyId, student);
+    public ResponseEntity<String> bookClassroomKey(@PathVariable Long keyId, @RequestParam Long userId) {
+        return studentService.bookClassroomKey(keyId, userId);
     }
 
     // Endpoint to check key availability
@@ -42,5 +43,24 @@ public class StudentController {
     @GetMapping("/available-rooms")
     public ResponseEntity<List<Map<String, Object>>> getAvailableRooms() {
         return studentService.getAvailableRooms();
+    }
+    
+    // New API Endpoints for Bicycle Management
+    
+    @PostMapping("/bookbicycle/{bicycleId}")
+    public ResponseEntity<String> bookBicycle(@PathVariable Long bicycleId, @RequestParam Long userId) {
+        return studentService.bookBicycle(bicycleId, userId);
+    }
+
+    @GetMapping("/available-bicycles")
+    public ResponseEntity<List<Bicycle>> listAvailableBicycles() {
+        List<Bicycle> bicycles = studentService.listAvailableBicycles();
+        return ResponseEntity.ok(bicycles);
+    }
+
+    @GetMapping("/all-bicycles")
+    public ResponseEntity<List<Bicycle>> listAllBicycles() {
+        List<Bicycle> bicycles = studentService.listAllBicycles();
+        return ResponseEntity.ok(bicycles);
     }
 }
