@@ -37,12 +37,20 @@ const Login = () => {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/admins/login", {
+      const response = await axios.post("http://localhost:8080/api/admin/login", {
         username,
         password
       });
+
       if (response.status === 200) {
-        navigate("/dashboard/admin");
+        const userRole = response.data.user.role;
+        if (userRole === "ADMIN") {
+          navigate("/dashboard/Admin"); // Navigate to admin dashboard
+        } else if (userRole === "STUDENT") {
+          navigate("/dashboard/student"); // Navigate to student dashboard (optional for future use)
+        } else {
+          setError("Invalid role");
+        }
       }
     } catch (error) {
       setError("Invalid username or password");
