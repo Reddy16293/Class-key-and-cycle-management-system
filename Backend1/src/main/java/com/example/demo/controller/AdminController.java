@@ -10,6 +10,7 @@ import com.example.demo.model.User;
 import com.example.demo.service.AdminService;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,23 @@ public class AdminController {
      return ResponseEntity.status(HttpStatus.CREATED).body(classroomKey);
  }
  
- 
+ /*@GetMapping("/check-key-availability/{keyId}")
+ public ResponseEntity<Integer> checkKeyAvailability(@PathVariable Long keyId) {  // Use @PathVariable instead of @RequestParam
+     return adminService.checkKeyAvailability(keyId);
+ }*/
+
+ // Endpoint to check key availability for all available rooms
+ @GetMapping("/available-keys")
+ public ResponseEntity<List<ClassroomKey>> listAvailableKeys() {
+     List<ClassroomKey> bicycles = adminService.listAvailableKeys();
+     return ResponseEntity.ok(bicycles);
+ }
+
+ @GetMapping("/all-keys")
+ public ResponseEntity<List<ClassroomKey>> listAllKeys(){
+     List<ClassroomKey> bicycles = adminService.listAllKeys();
+     return ResponseEntity.ok(bicycles);
+ }
 //New API Endpoints for Bicycle Management
 
  @PostMapping("/addbicycle")
