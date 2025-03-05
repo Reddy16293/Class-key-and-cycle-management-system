@@ -23,6 +23,9 @@ public class AdminServiceImpl implements AdminService {
     private UserRepository userRepository;
     @Autowired
     private BicycleRepository bicycleRepository;
+    @Autowired
+    private ClassroomKeyRepository classroomKeyRepository;
+   
     @Override
     public ResponseEntity signup(User admin) {
         if (!"ADMIN".equals(admin.getRole())) {
@@ -55,14 +58,21 @@ public class AdminServiceImpl implements AdminService {
         return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or role"));
     }
     
-    @Autowired
-    private ClassroomKeyRepository classroomKeyRepository;
+   
 
     @Override
     public void addClassroom(ClassroomKey classroomKey) {
         classroomKeyRepository.save(classroomKey);
     }
-    
+    @Override
+    public List<ClassroomKey> listAvailableKeys() {
+        return classroomKeyRepository.findByIsAvailable(0);
+    }
+
+    @Override
+    public List<ClassroomKey> listAllKeys() {
+        return classroomKeyRepository.findAll();
+    }
     
     @Override
     public void addBicycle(Bicycle bicycle) {
