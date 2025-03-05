@@ -2,7 +2,8 @@ import { useState } from "react";
 import { FaBars, FaSignOutAlt, FaKey, FaBicycle, FaComment, FaUser, FaInfoCircle, FaPlus } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
 import { IoPersonCircle } from "react-icons/io5";
-
+import KeyManagement from "../KeyManagement";
+import { Link } from "react-router-dom";
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -21,10 +22,10 @@ const AdminDashboard = () => {
             <MdDashboard />
             {isSidebarOpen && <span>Dashboard</span>}
           </li>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
+          <Link to="/key-management" className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
             <FaKey />
             {isSidebarOpen && <span>Key Management</span>}
-          </li>
+          </Link>
           <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
             <FaBicycle />
             {isSidebarOpen && <span>Bicycle Management</span>}
