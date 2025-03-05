@@ -57,6 +57,12 @@ public class AdminController {
      List<ClassroomKey> bicycles = adminService.listAllKeys();
      return ResponseEntity.ok(bicycles);
  }
+ 
+ @GetMapping("/recently-added-keys")
+ public ResponseEntity<List<ClassroomKey>> getRecentlyAddedKeys() {
+     List<ClassroomKey> recentKeys = adminService.getRecentlyAddedKeys();
+     return ResponseEntity.ok(recentKeys);
+ }
 //New API Endpoints for Bicycle Management
 
  @PostMapping("/addbicycle")

@@ -14,6 +14,8 @@ public interface AdminService {
     void addClassroom(ClassroomKey classroomKey);
     List<ClassroomKey> listAvailableKeys();
     List<ClassroomKey> listAllKeys();
+    List<ClassroomKey> getRecentlyAddedKeys();
+
     // New methods for bicycles
     void addBicycle(Bicycle bicycle);
     ResponseEntity<String> bookBicycle(Long bicycleId, Long userId);
