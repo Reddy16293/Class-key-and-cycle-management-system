@@ -66,13 +66,19 @@ public class AdminServiceImpl implements AdminService {
     }
     @Override
     public List<ClassroomKey> listAvailableKeys() {
-        return classroomKeyRepository.findByIsAvailable(0);
+        return classroomKeyRepository.findByIsAvailable(1);
     }
 
     @Override
     public List<ClassroomKey> listAllKeys() {
         return classroomKeyRepository.findAll();
     }
+    
+    @Override
+    public List<ClassroomKey> getRecentlyAddedKeys() {
+        return classroomKeyRepository.findTop5ByOrderByIdDesc();
+    }
+
     
     @Override
     public void addBicycle(Bicycle bicycle) {

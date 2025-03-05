@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ClassroomKeyRepository extends JpaRepository<ClassroomKey, Long> {
 	List<ClassroomKey> findByIsAvailable(int isAvailable);
+	List<ClassroomKey> findTop5ByOrderByIdDesc();
 }
