@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Mail } from "lucide-react";
 
-const backgrounds = [
-  "url('https://tse3.mm.bing.net/th?id=OIP.HzGwGuEGVuQcjAYvJpi13wHaEK&pid=Api&P=0&h=180')",
-  "url('https://tse3.mm.bing.net/th?id=OIP.Bmo1Zl8H5ZrCR16Fz8QaLAHaCe&pid=Api&P=0&h=180')",
-  "url('https://tse3.mm.bing.net/th?id=OIP.YLOnTTu4W-vZEV89euok3QHaEK&pid=Api&P=0&h=180')"
-];
+// Import images using new URL()
+const nitc1 = new URL("../../images/nitc1.webp", import.meta.url).href;
+const nitc2 = new URL("../../images/nitc2.webp", import.meta.url).href;
+const nitc3 = new URL("../../images/nitc3.jpg", import.meta.url).href;
+
+const backgrounds = [nitc1, nitc2, nitc3]; 
+
+
 
 const Login = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -20,12 +23,11 @@ const Login = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex((prevIndex) => (prevIndex + 1) % backgrounds.length);
-    }, 4000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
   const handleGoogleLogin = () => {
-    // Simulate Google OAuth2 login and domain verification
     const userEmail = "student@nitc.ac.in"; // Replace with real authentication logic
     if (userEmail.endsWith("@nitc.ac.in")) {
       navigate("/dashboard/student");
@@ -39,15 +41,13 @@ const Login = () => {
     try {
       const response = await axios.post("http://localhost:8080/api/admin/login", {
         username,
-        password
+        password,
       });
 
       if (response.status === 200) {
         const userRole = response.data.user.role;
         if (userRole === "ADMIN") {
-          navigate("/dashboard/Admin"); // Navigate to admin dashboard
-        } else if (userRole === "STUDENT") {
-          navigate("/dashboard/student"); // Navigate to student dashboard (optional for future use)
+          navigate("/dashboard/Admin");
         } else {
           setError("Invalid role");
         }
@@ -60,7 +60,10 @@ const Login = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center transition-all duration-1000"
-      style={{ backgroundImage: backgrounds[bgIndex] }}
+      style={{ 
+        backgroundImage: `url(${backgrounds[bgIndex]})`,
+        transition: "background-image 1s ease-in-out"
+      }}
     >
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md animate-fade-up">
         <div className="text-center mb-6">
@@ -71,13 +74,17 @@ const Login = () => {
         <div className="space-y-4">
           <div className="flex justify-center gap-4">
             <button
-              className={`px-4 py-2 rounded-lg font-medium transition ${!isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"}`}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                !isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"
+              }`}
               onClick={() => setIsAdmin(false)}
             >
               Student
             </button>
             <button
-              className={`px-4 py-2 rounded-lg font-medium transition ${isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"}`}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                isAdmin ? "bg-blue-600 text-white" : "border border-gray-300 text-gray-600"
+              }`}
               onClick={() => setIsAdmin(true)}
             >
               Admin
