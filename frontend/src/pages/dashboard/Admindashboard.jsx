@@ -1,90 +1,79 @@
-import { useState } from "react";
-import { FaBars, FaSignOutAlt, FaKey, FaBicycle, FaComment, FaUser, FaInfoCircle, FaPlus } from "react-icons/fa";
-import { MdDashboard } from "react-icons/md";
-import { IoPersonCircle } from "react-icons/io5";
-import KeyManagement from "../KeyManagement";
-import { Link } from "react-router-dom";
-const AdminDashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+import { useNavigate } from "react-router-dom";
+import { Key, Bike, MessageSquare } from "lucide-react";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
+
+const Admindashboard = () => {
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className={`bg-indigo-700 text-white transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-16"} p-5`}>
-        {/* Sidebar Toggle Button */}
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white text-xl mb-6">
-          <FaBars />
-        </button>
+      <Sidebar />
 
-        {/* Sidebar Navigation */}
-        <ul className="space-y-4">
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <MdDashboard />
-            {isSidebarOpen && <span>Dashboard</span>}
-          </li>
-          <Link to="/key-management" className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaKey />
-            {isSidebarOpen && <span>Key Management</span>}
-          </Link>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaBicycle />
-            {isSidebarOpen && <span>Bicycle Management</span>}
-          </li>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaComment />
-            {isSidebarOpen && <span>Feedback</span>}
-          </li>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaPlus />
-            {isSidebarOpen && <span>Assign CR</span>}
-          </li>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaUser />
-            {isSidebarOpen && <span>Profile</span>}
-          </li>
-          <li className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-            <FaInfoCircle />
-            {isSidebarOpen && <span>About</span>}
-          </li>
-        </ul>
-
-        {/* Logout Button */}
-        <div className="absolute bottom-5 left-5 flex items-center space-x-2 cursor-pointer hover:bg-indigo-600 p-2 rounded">
-          <FaSignOutAlt />
-          {isSidebarOpen && <span>Sign Out</span>}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Navbar */}
-        <div className="flex justify-between items-center bg-white p-4 shadow">
-          <h2 className="text-xl font-bold">Admin Dashboard</h2>
-          <button className="text-indigo-700 text-3xl">
-            <IoPersonCircle />
-          </button>
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col ml-16 md:ml-64 transition-all duration-300">
+        {/* Header */}
+        <Header />
 
         {/* Dashboard Content */}
-        <div className="flex flex-col items-center justify-center flex-1 p-10">
-          <h1 className="text-2xl font-semibold text-indigo-700 bg-indigo-100 p-4 rounded-lg">Welcome Admin</h1>
+        <main className="flex-1 overflow-y-auto p-8">
+          <div className="mb-8 mt-2 text-center">
+            <div className="inline-block bg-purple-100 text-purple-700 text-sm font-medium px-3 py-1 rounded-full animate-fade-in">
+              Admin Dashboard
+            </div>
+            <h1 className="text-4xl font-bold mt-4 mb-2 text-gray-800 animate-fade-up">
+              Welcome Admin
+            </h1>
+            <p className="text-gray-500 max-w-lg mx-auto animate-fade-up">
+              Manage keys, bicycles, and view feedback all in one place
+            </p>
+          </div>
+
+          {/* Dashboard Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 mt-8">
+            {[
+              { title: "Key Management", icon: <Key size={40} />, path: "/key-management" },
+              { title: "Bicycle Management", icon: <Bike size={40} />, path: "/bicycle-management" },
+              { title: "View Feedback", icon: <MessageSquare size={40} />, path: "/feedback" }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="bg-white shadow-md rounded-lg p-6 text-center cursor-pointer transition transform hover:scale-105 hover:shadow-lg"
+                onClick={() => navigate(item.path)}
+              >
+                <div className="flex justify-center items-center bg-purple-200 text-purple-800 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                  {item.icon}
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800">{item.title}</h2>
+                <p className="text-gray-500 text-sm">Manage and monitor {item.title.toLowerCase()}</p>
+              </div>
+            ))}
+          </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 space-y-4 w-full max-w-md">
-            <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
-              <FaKey className="mr-2" /> View Key Status & Borrowings
-            </button>
-            <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
-              <FaBicycle className="mr-2" /> View Bicycle Status & Borrowings
-            </button>
-            <button className="flex items-center justify-center w-full p-4 bg-indigo-700 text-white rounded-full text-lg">
-              <FaComment className="mr-2" /> View Feedbacks
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {[
+              { title: "View Key Status & Borrowings", icon: <Key size={20} />, path: "/key-management" },
+              { title: "View Bicycle Status & Borrowings", icon: <Bike size={20} />, path: "/bicycle-management" },
+              { title: "View Feedbacks", icon: <MessageSquare size={20} />, path: "/feedback", span: true }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className={`bg-purple-600 text-white font-semibold flex items-center justify-center px-6 py-4 rounded-lg cursor-pointer transition hover:bg-purple-700 ${
+                  item.span ? "col-span-1 md:col-span-2" : ""
+                }`}
+                onClick={() => navigate(item.path)}
+              >
+                {item.icon}
+                <span className="ml-2">{item.title}</span>
+              </div>
+            ))}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
 };
 
-export default AdminDashboard;
+export default Admindashboard;
