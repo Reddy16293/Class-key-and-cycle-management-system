@@ -1,9 +1,36 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FaBars, FaKey, FaBicycle, FaEnvelope, FaPaperPlane, FaSignOutAlt, FaUser, FaClock, FaInfoCircle } from "react-icons/fa";
 
 const StudentDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:8080/api/logout",
+        {},
+        { withCredentials: true } // 🚨 Ensure cookies are sent with the request
+      );
+  
+      // Remove any locally stored user info
+      localStorage.removeItem("user");
+  
+      // Redirect to Google logout (if using OAuth)
+      window.location.href = "https://accounts.google.com/logout";
+  
+      // Redirect to login page
+      window.location.href = "http://localhost:5173/";
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+  
+  
+  
   return (
     <div className="h-screen bg-indigo-100 flex flex-col">
       {/* Navbar */}
@@ -29,7 +56,7 @@ const StudentDashboard = () => {
               <FaClock className="text-indigo-700" />
               <span>View History</span>
             </li>
-            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded">
+            <li className="flex items-center space-x-2 cursor-pointer hover:bg-gray-200 p-2 rounded" onClick={handleLogout}>
               <FaSignOutAlt className="text-indigo-700" />
               <span>Sign Out</span>
             </li>
