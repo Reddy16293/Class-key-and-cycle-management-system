@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login1 from "./pages/auth/Login1";
 import AdminDashboard from "./pages/dashboard/Admindashboard";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
-import KeyManagement from "./pages/KeyManagement";
+import KeyManagement1 from "./pages/KeyManagement1";
 import FakeDashboard from "./FakeDashboard";
 import Login from "./Login";
 import AvailableCycles from "./AvailableCycles";
@@ -25,7 +25,7 @@ const App = () => {
         <Route path="/login" element={< Login />} />
         <Route path="/available-cycles" element={< AvailableCycles />} />
         <Route path="/dashboard/student" element={< StudentDashboard />} />
-        <Route path="/key-management" element={< KeyManagement />} />
+        <Route path="/key-management" element={< KeyManagement1 />} />
         <Route path="/bicycle-management" element={< BicycleManagement />} />
         <Route path="/available-keys" element={<AvailableKeys/>} />
         <Route path="/available-bicycles" element={<AvailableBicycles/>} />
