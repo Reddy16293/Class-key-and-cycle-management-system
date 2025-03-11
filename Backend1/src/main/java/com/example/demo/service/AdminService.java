@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface AdminService {
-    ResponseEntity<String> signup(User admin);
-    ResponseEntity<String> login(User admin);
+	
+	 ResponseEntity<String> signup(User admin);
+	    ResponseEntity<String> login(User admin);
     void addClassroom(ClassroomKey classroomKey);
     List<ClassroomKey> listAvailableKeys();
     List<ClassroomKey> listAllKeys();
@@ -21,4 +22,5 @@ public interface AdminService {
     ResponseEntity<String> bookBicycle(Long bicycleId, Long userId);
     List<Bicycle> listAvailableBicycles();
     List<Bicycle> listAllBicycles();
+    List<Bicycle> getRecentlyAddedCycle();
 }

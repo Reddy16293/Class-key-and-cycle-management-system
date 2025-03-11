@@ -42,7 +42,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public ResponseEntity login(User student) {
-        Optional<User> existingStudent = userRepository.findByUsername(student.getUsername());
+        Optional<User> existingStudent = userRepository.findByUserName(student.getUserName());
         if (existingStudent.isPresent() && existingStudent.get().getPassword().equals(student.getPassword()) && "STUDENT".equals(existingStudent.get().getRole())) {
 
             // Prepare response with success message and user details
