@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
@@ -15,47 +15,61 @@ const KeyManagement1 = () => {
   const [blockName, setBlockName] = useState('');
   const [classroomName, setClassroomName] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
-  
-  const [keys, setKeys] = useState([
-    { id: '1', blockName: 'Block A', classroomName: 'Room 101', isAvailable: true },
-    { id: '2', blockName: 'Block B', classroomName: 'Room 202', isAvailable: false },
-    { id: '3', blockName: 'Block C', classroomName: 'Room 303', isAvailable: true },
-  ]);
-  
+  const [recentKeys, setRecentKeys] = useState([]); // 🔹 State for recently added keys
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Fetch recently added keys from backend
+  useEffect(() => {
+    const fetchRecentKeys = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/admin/recently-added-keys', {
+          withCredentials: true, // Ensures authentication cookies are sent
+        });
+        setRecentKeys(response.data);
+      } catch (error) {
+        console.error('Error fetching recent keys:', error);
+        toast.error('Failed to fetch recent keys');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentKeys();
+  }, []);
+
   const handleAddKey = async (e) => {
     e.preventDefault();
-    
     if (!blockName || !classroomName) {
       toast.error('Please fill all required fields');
       return;
     }
-    
+
     const newKey = {
       blockName,
       classroomName,
       isAvailable: isAvailable ? 1 : 0
     };
-    
-    try {
-  const response = await axios.post('http://localhost:8080/api/admin/addclassrooms', newKey);
-  
-  setKeys([...keys, { id: Date.now().toString(), ...response.data }]);
-  setBlockName('');
-  setClassroomName('');
-  setIsAvailable(true);
-  
-  toast.success('Key added successfully');
-} catch (error) {
-  if (error.response && error.response.status === 409) {
-    toast.error(error.response.data.message || 'Classroom already exists');
-  } else {
-    toast.error('Failed to add key');
-  }
-  console.error('Error adding key:', error);
-}
 
+    try {
+      const response = await axios.post('http://localhost:8080/api/admin/addclassrooms', newKey);
+      setBlockName('');
+      setClassroomName('');
+      setIsAvailable(true);
+      toast.success('Key added successfully');
+      
+      // 🔹 Refresh the recent keys list after adding a new key
+      setRecentKeys((prev) => [response.data, ...prev.slice(0, 4)]);
+
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        toast.error(error.response.data.message || 'Classroom already exists');
+      } else {
+        toast.error('Failed to add key');
+      }
+      console.error('Error adding key:', error);
+    }
   };
-  
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
@@ -63,6 +77,8 @@ const KeyManagement1 = () => {
         <Header />
         <div className="p-6 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Add New Key Form */}
             <div className="bg-white p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
                 <Key className="text-purple-600" size={24} /> Add New Key
@@ -106,6 +122,8 @@ const KeyManagement1 = () => {
                 </Button>
               </form>
             </div>
+
+            {/* Key Management Options */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h2 className="text-xl font-semibold mb-4">Key Management Options</h2>
@@ -118,23 +136,32 @@ const KeyManagement1 = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Recently Added Keys */}
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h2 className="text-xl font-semibold mb-4">Recently Added Keys</h2>
-                <div className="space-y-3">
-                  {keys.slice(-3).reverse().map((key) => (
-                    <div key={key.id} className="p-4 border rounded-lg flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium">{key.blockName} - {key.classroomName}</h3>
-                        <span className={`px-2 py-1 text-sm rounded-lg ${key.isAvailable ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
-
-                          {key.isAvailable ? 'Available' : 'Not Available'}
-                        </span>
+                
+                {loading ? (
+                  <p className="text-gray-600">Loading recent keys...</p>
+                ) : recentKeys.length === 0 ? (
+                  <p className="text-gray-600">No recent keys available.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentKeys.map((key) => (
+                      <div key={key.id} className="p-4 border rounded-lg flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">{key.blockName} - {key.classroomName}</h3>
+                          <span className={`px-2 py-1 text-sm rounded-lg ${key.isAvailable ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
+                            {key.isAvailable ? 'Available' : 'Not Available'}
+                          </span>
+                        </div>
+                        <Key size={24} className="text-purple-600" />
                       </div>
-                      <Key size={24} className="text-purple-600" />
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
             </div>
           </div>
         </div>

@@ -1,50 +1,74 @@
-import { useState } from 'react';
-import { UserCheck, UserX, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { UserCheck, UserX, Search, Loader } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { toast } from 'sonner';
-
-// Mock student data
-const initialStudents = [
-  { id: '1', name: 'John Doe', rollNumber: 'CS001', role: 'Non-CR' },
-  { id: '2', name: 'Jane Smith', rollNumber: 'CS002', role: 'CR' },
-  { id: '3', name: 'Michael Brown', rollNumber: 'CS003', role: 'Non-CR' },
-  { id: '4', name: 'Emma Wilson', rollNumber: 'CS004', role: 'Non-CR' },
-  { id: '5', name: 'Robert Johnson', rollNumber: 'CS005', role: 'CR' },
-];
 
 const StudentList = () => {
-  const [students, setStudents] = useState(initialStudents);
+  const [students, setStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/admin/all-users', { withCredentials: true });
+
+        // Extract roll number & filter out ADMINs
+        const filteredStudents = response.data
+          .filter(user => user.role === 'CR' || user.role === 'NON_CR')
+          .map(user => ({
+            ...user,
+            rollNumber: extractRollNumber(user.email),
+          }));
+
+        setStudents(filteredStudents);
+      } catch (error) {
+        toast.error('Failed to fetch students');
+        console.error('Error fetching students:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  // Function to extract roll number from email
+  const extractRollNumber = (email) => {
+    const match = email.match(/_(\d+)@nitc\.ac\.in/); // Extracts roll number
+    return match ? match[1] : 'N/A'; // If no match, return "N/A"
+  };
+
+  // Handle Role Change (Calls Backend API)
+  const handleRoleChange = async (id) => {
+    try {
+      const response = await axios.put(`http://localhost:8080/api/admin/change-role/${id}`, {}, { withCredentials: true });
+
+      setStudents((prevStudents) =>
+        prevStudents.map((student) =>
+          student.id === id
+            ? { ...student, role: student.role === 'CR' ? 'NON_CR' : 'CR' }
+            : student
+        )
+      );
+
+      toast.success(response.data, {
+        position: 'top-center',
+      });
+    } catch (error) {
+      toast.error('Failed to change role');
+      console.error('Error changing role:', error);
+    }
+  };
 
   // Filter students based on search query
   const filteredStudents = students.filter((student) =>
     student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Handle Role Change
-  const handleRoleChange = (id) => {
-    setStudents((prevStudents) =>
-      prevStudents.map((student) => {
-        if (student.id === id) {
-          const newRole = student.role === 'CR' ? 'Non-CR' : 'CR';
-
-          toast.success(
-            `${student.name} is now ${newRole === 'CR' ? 'a CR' : 'no longer a CR'}`,
-            {
-              description: `Roll Number: ${student.rollNumber}`,
-              position: 'top-center',
-            }
-          );
-
-          return { ...student, role: newRole };
-        }
-        return student;
-      })
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -65,16 +89,24 @@ const StudentList = () => {
           <thead>
             <tr className="bg-purple-600 text-white">
               <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
               <th className="px-6 py-3 text-left text-sm font-semibold">Roll Number</th>
               <th className="px-6 py-3 text-left text-sm font-semibold">Role</th>
               <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredStudents.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="5" className="text-center py-6">
+                  <Loader className="animate-spin inline-block" /> Loading...
+                </td>
+              </tr>
+            ) : filteredStudents.length > 0 ? (
               filteredStudents.map((student) => (
                 <tr key={student.id} className="hover:bg-gray-100 transition">
                   <td className="px-6 py-4">{student.name}</td>
+                  <td className="px-6 py-4">{student.email}</td>
                   <td className="px-6 py-4">{student.rollNumber}</td>
                   <td className="px-6 py-4">
                     <Badge
@@ -90,9 +122,7 @@ const StudentList = () => {
                       size="sm"
                       variant={student.role === 'CR' ? 'destructive' : 'default'}
                       onClick={() => handleRoleChange(student.id)}
-                      className={`flex items-center gap-2 px-4 py-2 ${
-                        student.role === 'CR' ? 'text-black' : ''
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2`}
                     >
                       {student.role === 'CR' ? (
                         <>
@@ -109,7 +139,7 @@ const StudentList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="text-center py-6 text-gray-500">
+                <td colSpan="5" className="text-center py-6 text-gray-500">
                   No students found.
                 </td>
               </tr>
