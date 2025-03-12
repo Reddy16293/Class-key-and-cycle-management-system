@@ -12,6 +12,7 @@ import AvailableKeys from "./pages/AvailableKeys";
 import AllKeys from "./pages/AllKeys";
 import AvailableBicycles from "./pages/AvailableBicycles";
 import AllBicycles from "./pages/AllBicycles";
+import AssignCR from "./pages/AssignCR";
 const Dashboard = () => <h2 className="text-center text-3xl mt-10">Welcome to Dashboard</h2>;
 
 const App = () => {
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/available-bicycles" element={<AvailableBicycles/>} />
         <Route path="/all-keys" element={<AllKeys/>} />
         <Route path="/all-bicycles" element={<AllBicycles/>} />
+        <Route path="assign-cr" element={<AssignCR/>} />
         {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}
       </Routes>
     
