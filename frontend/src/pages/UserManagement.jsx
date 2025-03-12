@@ -25,7 +25,11 @@ const UserManagement = () => {
       try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error("Failed to fetch users");
-        const data = await response.json();
+        let data = await response.json();
+  
+        // Filter out ADMIN users
+        data = data.filter(user => user.role === "CR" || user.role === "NON_CR");
+  
         setUsers(data);
       } catch (err) {
         setError(err.message);
@@ -35,6 +39,7 @@ const UserManagement = () => {
     };
     fetchUsers();
   }, []);
+  
 
   const filteredUsers = users.filter(
     (user) =>
@@ -109,9 +114,7 @@ const UserManagement = () => {
       key: "status",
       header: "Status",
       cell: (row) => (
-        <Badge
-          className={row.status === "Active" ? "bg-green-500" : "bg-gray-500"}
-        >
+        <Badge className={row.status === "Active" ? "bg-green-500" : "bg-gray-500"}>
           {row.status}
         </Badge>
       ),
@@ -142,15 +145,16 @@ const UserManagement = () => {
           >
             {row.status === "Active" ? <>Deactivate</> : <>Activate</>}
           </Button>
-
-          <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(row)}>
-            <UserMinus size={16} className="mr-2" /> Delete
+  
+          {/* Delete button with icon */}
+          <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(row)} className="flex items-center gap-1">
+            <UserMinus size={18} className="mr-1" /> Delete
           </Button>
         </div>
       ),
     },
   ];
-
+  
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}

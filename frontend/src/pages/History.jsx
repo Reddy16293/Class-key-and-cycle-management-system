@@ -1,27 +1,79 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { History as HistoryIcon, Search, Filter } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { DataTable } from "../components/ui/data-table";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-import Sidebar from "../components/Sidebar"; // ✅ Import Sidebar
-import Header from "../components/Header"; // ✅ Import Header
-
-// Mock Data
-const keyHistory = [
-  { id: 1, keyId: "K001", roomNumber: "101", borrowedBy: "John Doe", borrowedDate: "2023-07-10 09:30", returnedDate: "2023-07-10 16:45", status: "Returned" },
-  { id: 2, keyId: "K002", roomNumber: "102", borrowedBy: "Jane Smith", borrowedDate: "2023-07-11 08:15", returnedDate: null, status: "Borrowed" },
-];
-
-const bicycleHistory = [
-  { id: 1, bicycleId: "B001", model: "Mountain Bike", borrowedBy: "John Doe", borrowedDate: "2023-07-05 10:00", returnedDate: "2023-07-05 18:00", status: "Returned" },
-  { id: 2, bicycleId: "B002", model: "City Bike", borrowedBy: "Jane Smith", borrowedDate: "2023-07-06 09:15", returnedDate: null, status: "Borrowed" },
-];
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
 
 const History = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [keyHistory, setKeyHistory] = useState([]);
+  const [bicycleHistory, setBicycleHistory] = useState([]);
 
+  // ✅ Fetch Borrowing History
+  useEffect(() => {
+    fetch("http://localhost:8080/api/history/all")
+      .then((response) => response.json())
+      .then((data) => {
+        // Separate Key History and Bicycle History
+        const keys = data
+          .filter((item) => item.classroomKey !== null) // Filter classroom key records
+          .map((item) => ({
+            id: item.id,
+            keyId: `Key-${item.classroomKey.id}`,
+            roomNumber: item.classroomKey.classroomName,
+            borrowedBy: item.student.name,
+            borrowedDate: new Date(item.borrowTime).toLocaleString(),
+            returnedDate: item.returnTime ? new Date(item.returnTime).toLocaleString() : null,
+            status: item.returnTime ? "Returned" : "Borrowed",
+          }));
+
+        const bicycles = data
+          .filter((item) => item.bicycle !== null) // Filter bicycle records
+          .map((item) => ({
+            id: item.id,
+            bicycleId: `Bicycle-${item.bicycle.id}`,
+            model: item.bicycle.model,
+            borrowedBy: item.student.name,
+            borrowedDate: new Date(item.borrowTime).toLocaleString(),
+            returnedDate: item.returnTime ? new Date(item.returnTime).toLocaleString() : null,
+            status: item.returnTime ? "Returned" : "Borrowed",
+          }));
+
+        setKeyHistory(keys);
+        setBicycleHistory(bicycles);
+      })
+      .catch((error) => console.error("Error fetching history:", error));
+  }, []);
+
+  // ✅ Filtering Function
+  const filterData = (data) => {
+    let filteredData = data;
+
+    // Filter by status (Borrowed or Returned)
+    if (filterStatus !== "all") {
+      filteredData = filteredData.filter((item) => item.status === filterStatus);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      filteredData = filteredData.filter(
+        (item) =>
+          item.borrowedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.keyId && item.keyId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (item.bicycleId && item.bicycleId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (item.roomNumber && item.roomNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (item.model && item.model.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    return filteredData;
+  };
+
+  // Table Columns
   const keyColumns = [
     { key: "keyId", header: "Key ID", cell: (row) => <div className="font-semibold text-gray-700">{row.keyId}</div> },
     { key: "roomNumber", header: "Room", cell: (row) => <div className="text-gray-600">{row.roomNumber}</div> },
@@ -56,21 +108,6 @@ const History = () => {
     },
   ];
 
-  const filterData = (data) => {
-    let filteredData = data;
-    if (filterStatus !== "all") filteredData = filteredData.filter((item) => item.status === filterStatus);
-    if (searchQuery)
-      filteredData = filteredData.filter(
-        (item) =>
-          item.borrowedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.keyId && item.keyId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.bicycleId && item.bicycleId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.roomNumber && item.roomNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.model && item.model.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    return filteredData;
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -94,13 +131,13 @@ const History = () => {
           {/* Search & Filters */}
           <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
             <div className="flex flex-col md:flex-row items-center gap-4">
-              {/* Search */}
+              {/* Search Input */}
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                 <Input placeholder="Search by ID, room, or user..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 border-gray-300" />
               </div>
 
-              {/* Status Filter */}
+              {/* Status Filter Dropdown */}
               <div className="flex items-center gap-2">
                 <Filter size={18} className="text-gray-500" />
                 <select className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -115,17 +152,17 @@ const History = () => {
           {/* Tabs for History */}
           <div className="bg-white shadow-lg rounded-lg mt-6 p-6">
             <Tabs defaultValue="keys">
-              <TabsList className="flex space-x-4 border-b pb-2">
-                <TabsTrigger value="keys" className="px-4 py-2 font-medium rounded-md hover:bg-gray-100 transition">Key History</TabsTrigger>
-                <TabsTrigger value="bicycles" className="px-4 py-2 font-medium rounded-md hover:bg-gray-100 transition">Bicycle History</TabsTrigger>
+              <TabsList>
+                <TabsTrigger value="keys">Key History</TabsTrigger>
+                <TabsTrigger value="bicycles">Bicycle History</TabsTrigger>
               </TabsList>
 
               <TabsContent value="keys">
-                <DataTable columns={keyColumns} data={filterData(keyHistory)} idField="id" />
+                <DataTable columns={keyColumns} data={filterData(keyHistory)} />
               </TabsContent>
 
               <TabsContent value="bicycles">
-                <DataTable columns={bicycleColumns} data={filterData(bicycleHistory)} idField="id" />
+                <DataTable columns={bicycleColumns} data={filterData(bicycleHistory)} />
               </TabsContent>
             </Tabs>
           </div>

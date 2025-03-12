@@ -1,0 +1,8 @@
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE,  -- Nullable and unique, used for Admins only
+    role VARCHAR(50) NOT NULL,  -- Either "ADMIN" or "STUDENT"
+    password VARCHAR(255),  -- Nullable, used for Admins only
+    email VARCHAR(255) UNIQUE,  -- Nullable and unique, used for Students only
+    CONSTRAINT chk_role CHECK (role IN ('ADMIN', 'STUDENT'))
+);
