@@ -85,7 +85,7 @@ const Login1 = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center transition-all duration-1000"
       style={{ 
         backgroundImage: `url(${backgrounds[bgIndex]})`,
-        transition: "background-image 1s ease-in-out"
+        transition: "background-image 4s ease-in-out"
       }}
     >
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md animate-fade-up">
