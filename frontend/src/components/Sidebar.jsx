@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Key, Bike, MessageSquare, Plus, User, Info, LogOut, Menu, X } from 'lucide-react';
+import { Home, Key, Bike, MessageSquare, Plus, User, Info, LogOut, Menu, X, History } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useIsMobile } from '../hooks/use-mobile';
 
@@ -49,20 +49,47 @@ export const Sidebar = () => {
         )}
       >
         <div className="py-6 px-4">
-          <h1 className={cn("text-lg font-bold text-white", isOpen ? "text-xl" : "text-center text-sm")}>
-            {isOpen ? "Admin Panel" : "AP"}
-          </h1>
-        </div>
-        
-        <nav className="flex-1 px-3 space-y-2">
-          <SidebarLink to="/dashboard/Admin" icon={Home}>Dashboard</SidebarLink>
-          <SidebarLink to="/key-management" icon={Key}>Key Management</SidebarLink>
-          <SidebarLink to="/bicycle-management" icon={Bike}>Bicycle Management</SidebarLink>
-          <SidebarLink to="/feedback" icon={MessageSquare}>Feedback</SidebarLink>
-          <SidebarLink to="/assign-cr" icon={Plus}>Assign CR</SidebarLink>
-          <SidebarLink to="/profile" icon={User}>Profile</SidebarLink>
-          <SidebarLink to="/about" icon={Info}>About</SidebarLink>
-        </nav>
+  <h1 className={cn("text-lg font-bold text-white", isOpen ? "text-xl" : "text-center text-sm")}>
+    {isOpen ? "Admin Panel" : "AP"}
+  </h1>
+</div>
+
+<nav className="flex-1 items-center justify-center">
+  <SidebarLink to="/dashboard/Admin" icon={Home} >
+    {isOpen ? "Dashboard" : <Home />}
+  </SidebarLink>
+  <SidebarLink to="/key-management" icon={Key}>
+    {isOpen ? "Key Management" : <Key />}
+  </SidebarLink>
+  <SidebarLink to="/bicycle-management" icon={Bike}>
+    {isOpen ? "Bicycle Management" : <Bike />}
+  </SidebarLink>
+  <SidebarLink to="/feedback" icon={MessageSquare}>
+    {isOpen ? "Feedback" : <MessageSquare />}
+  </SidebarLink>
+  
+  <SidebarLink to="/assign-cr" icon={Plus}>
+    {isOpen ? "Assign CR" : <Plus />}
+    </SidebarLink>
+    <SidebarLink to="/history" icon={History}>
+    {isOpen ? "History" : <History />}
+    </SidebarLink>
+
+    <SidebarLink to="/user-management" icon={Info}>
+    {isOpen ? "UserManagement" : "UM"}
+  </SidebarLink>
+
+
+  <SidebarLink to="/profile" icon={User}>
+    {isOpen ? "Profile" : <User />}
+    </SidebarLink>
+
+  <SidebarLink to="/about" icon={Info}>
+    {isOpen ? "About" : <Info />}
+  </SidebarLink>
+  
+</nav>
+
         
         <div className="mt-auto p-4">
           <button className="w-full flex items-center gap-4 p-3 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-all">
