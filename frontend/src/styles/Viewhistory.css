@@ -1,0 +1,105 @@
+.view-history-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+  }
+  
+  h1 {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  p {
+    color: gray;
+  }
+  
+  /* Search Bar & Filters */
+  .history-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+  }
+  
+  .search-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #f1f1f1;
+    border-radius: 5px;
+    padding: 8px;
+  }
+  
+  .search-bar input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    padding: 5px;
+  }
+  
+  .filter-btn, .export-btn {
+    display: flex;
+    align-items: center;
+    background: #f1f1f1;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .icon {
+    margin-right: 5px;
+  }
+  
+  /* Tabs */
+  .history-tabs {
+    display: flex;
+    margin: 20px 0;
+  }
+  
+  .tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    background: #f1f1f1;
+    text-align: center;
+  }
+  
+  .tab.active {
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* History List */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .history-item {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    justify-content: space-between;
+  }
+  
+  .item-icon {
+    font-size: 24px;
+    color: #007bff;
+  }
+  
+  .history-details h3 {
+    margin: 0;
+  }
+  
+  .duration {
+    font-weight: bold;
+    color: gray;
+  }
+  

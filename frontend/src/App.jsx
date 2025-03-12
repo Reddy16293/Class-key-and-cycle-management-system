@@ -12,6 +12,12 @@ import AvailableKeys from "./pages/AvailableKeys";
 import AllKeys from "./pages/AllKeys";
 import AvailableBicycles from "./pages/AvailableBicycles";
 import AllBicycles from "./pages/AllBicycles";
+import Borrowkeys from "./pages/Borrowkeys";
+import BorrowBicycles from "./pages/Borrowbicycle";
+import Receivedrequests from "./pages/Receivedrequests";
+import Sentrequests from "./pages/Sentrequests";
+import Viewhistory from "./pages/Viewhistory";
+import About from "./pages/About";
 const Dashboard = () => <h2 className="text-center text-3xl mt-10">Welcome to Dashboard</h2>;
 
 const App = () => {
@@ -31,6 +37,12 @@ const App = () => {
         <Route path="/available-bicycles" element={<AvailableBicycles/>} />
         <Route path="/all-keys" element={<AllKeys/>} />
         <Route path="/all-bicycles" element={<AllBicycles/>} />
+        <Route path="/borrowkeys" element={<Borrowkeys/>} />
+        <Route path="/borrowbicycle" element={<BorrowBicycles/>} />
+        <Route path="/receivedrequests" element={<Receivedrequests/>} />
+        <Route path="/sentrequests" element={<Sentrequests/>} />
+        <Route path="/viewhistory" element={<Viewhistory/>} />
+        <Route path="/s-about" element={<About/>} />
         {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}
       </Routes>
     
