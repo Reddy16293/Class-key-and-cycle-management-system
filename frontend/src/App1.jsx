@@ -16,6 +16,10 @@ import AssignCR from "./pages/AssignCR";
 import History from "./pages/History";
 import UserManagement from "./pages/UserManagement";
 import Profile from "./pages/Profile";
+import Borrowkeys from "./pages/Borrowkeys";
+import BorrowBicycles from "./pages/Borrowbicycle";
+import Receivedrequests from "./pages/Receivedrequests";
+
 // import UserDetails from "./UserDetails";
 const Dashboard = () => <h2 className="text-center text-3xl mt-10">Welcome to Dashboard</h2>;
 
@@ -40,6 +44,10 @@ const App1 = () => {
         <Route path="assign-cr" element={<AssignCR/>} />
         <Route path="user-management" element={<UserManagement/>} />
         <Route path="profile" element={<Profile/>} />
+        <Route path="/borrowkeys" element={<Borrowkeys/>} />
+        <Route path="/borrowbicycle" element={<BorrowBicycles/>} />
+        <Route path="/receivedrequests" element={<Receivedrequests/>} />
+
         {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}
         <Route path="/history" element={<History/>} />
       </Routes>
