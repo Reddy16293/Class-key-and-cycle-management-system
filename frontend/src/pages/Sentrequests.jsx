@@ -2,11 +2,12 @@ import { useState } from "react";
 import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
 import { FiClock } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Sentrequests = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const requests = [
     {
@@ -70,11 +71,19 @@ const Sentrequests = () => {
       {sidebarOpen && "Received Requests"}
     </button>
     <button 
-      onClick={() => navigate('/sentrequests')} 
-      className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-    >
-      <FiClock className={sidebarOpen ? "mr-2" : ""} /> 
-      {sidebarOpen && "Sent Requests"}
+          onClick={() => navigate('/sentrequests')} 
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === '/sentrequests' 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'hover:bg-gray-200'
+          }`}
+        >
+          <FiClock className={`${sidebarOpen ? "mr-2" : ""} ${
+            location.pathname === '/sentrequests' ? 'text-blue-600' : ''
+          }`} /> 
+          {sidebarOpen && "Sent Requests"}
     </button>
     <button 
       onClick={() => navigate('/viewhistory')} 

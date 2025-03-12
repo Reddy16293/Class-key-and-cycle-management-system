@@ -13,7 +13,7 @@ import {
   FaDownload
 } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
 import "../styles/Viewhistory.css";
 
@@ -23,6 +23,7 @@ const Viewhistory = () => {
   const [filterOption, setFilterOption] = useState("all"); // "all" or "date"
   const [selectedDate, setSelectedDate] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const keysHistory = [
     { room: "Room 101", borrowed: "Jun 10, 03:00 PM", returned: "Jun 10, 08:15 PM", duration: "5h 15m" },
@@ -82,11 +83,19 @@ const Viewhistory = () => {
       {sidebarOpen && "Sent Requests"}
     </button>
     <button 
-      onClick={() => navigate('/viewhistory')} 
-      className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-    >
-      <FaHistory className={sidebarOpen ? "mr-2" : ""} /> 
-      {sidebarOpen && "View History"}
+          onClick={() => navigate('/viewhistory')} 
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === '/viewhistory' 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'hover:bg-gray-200'
+          }`}
+        >
+          <FaHistory className={`${sidebarOpen ? "mr-2" : ""} ${
+            location.pathname === '/viewhistory' ? 'text-blue-600' : ''
+          }`} /> 
+          {sidebarOpen && "View History"}
     </button>
     <button 
       onClick={() => navigate('/s-about')} 

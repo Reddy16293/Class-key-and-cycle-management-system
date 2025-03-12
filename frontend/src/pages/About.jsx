@@ -2,11 +2,12 @@ import { useState } from "react";
 import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
 import { FiClock } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const About = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -60,12 +61,20 @@ const About = () => {
             {sidebarOpen && "View History"}
           </button>
           <button 
-            onClick={() => navigate('/s-about')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-          >
-            <FaInfoCircle className={sidebarOpen ? "mr-2" : ""} /> 
-            {sidebarOpen && "About"}
-          </button>
+          onClick={() => navigate('/s-about')} 
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === '/s-about' 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'hover:bg-gray-200'
+          }`}
+        >
+          <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""} ${
+            location.pathname === '/s-about' ? 'text-blue-600' : ''
+          }`} /> 
+          {sidebarOpen && "About"}
+    </button>
         </nav>
         <button className={`mt-auto text-red-500 flex items-center ${!sidebarOpen ? "justify-center" : ""}`}>
           <FaSignOutAlt className={sidebarOpen ? "mr-2" : ""} /> 

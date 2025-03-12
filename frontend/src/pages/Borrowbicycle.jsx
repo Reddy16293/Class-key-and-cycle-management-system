@@ -3,12 +3,13 @@ import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, Fa
 import { Camera } from "lucide-react";
 import { FiClock } from "react-icons/fi";
 import { IoMenu } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const BorrowBicycles = () =>{
   const [bicycleCount, setBicycleCount] = useState(5); // Example count of available bicycles
 const [sidebarOpen, setSidebarOpen] = useState(true);
 const navigate = useNavigate();
+const location = useLocation();
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -34,11 +35,19 @@ const navigate = useNavigate();
       {sidebarOpen && "Borrow Keys"}
     </button>
     <button 
-      onClick={() => navigate('/borrowbicycle')} 
-      className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-    >
-      <FaBicycle className={sidebarOpen ? "mr-2" : ""} /> 
-      {sidebarOpen && "Borrow Bicycles"}
+          onClick={() => navigate('/borrowbicycle')} 
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === '/borrowbicycle' 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'hover:bg-gray-200'
+          }`}
+        >
+          <FaBicycle className={`${sidebarOpen ? "mr-2" : ""} ${
+            location.pathname === '/borrowbicycle' ? 'text-blue-600' : ''
+          }`} /> 
+          {sidebarOpen && "Borrow Bicycles"}
     </button>
     <button 
       onClick={() => navigate('/receivedrequests')} 
