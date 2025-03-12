@@ -49,24 +49,25 @@ const Login1 = () => {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/admin/login1", {
-        username,
+      const response = await axios.post("http://localhost:8080/api/admin/login2", {
+        userName: username,
         password,
       });
-
+  
       if (response.status === 200) {
-        const userRole = response.data.user.role;
-        if (userRole === "ADMIN") {
+        console.log("Response:", response.data); // Debugging purpose
+        if (response.data.role === "ADMIN") {
           setIsLoggedIn(true);
           navigate("/dashboard/Admin");
         } else {
-          setError("Invalid role");
+          setError("Access denied: Not an admin");
         }
       }
     } catch (error) {
-      setError("Invalid username or password");
+      setError(error.response?.data?.error || "Invalid username or password");
     }
   };
+  
 
   // Logout function
   const handleLogout = async () => {
@@ -84,7 +85,7 @@ const Login1 = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center transition-all duration-1000"
       style={{ 
         backgroundImage: `url(${backgrounds[bgIndex]})`,
-        transition: "background-image 1s ease-in-out"
+        transition: "background-image 4s ease-in-out"
       }}
     >
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md animate-fade-up">
