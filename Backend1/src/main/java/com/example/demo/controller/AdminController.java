@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Bicycle;
+import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
@@ -144,6 +145,21 @@ public class AdminController {
      List<ClassroomKey> recentKeys = adminService.getRecentlyAddedKeys();
      return ResponseEntity.ok(recentKeys);
  }
+ 
+ @GetMapping("/key-history")
+ public ResponseEntity<List<BorrowHistory>> getAllKeyHistory() {
+     List<BorrowHistory> keyHistory = adminService.getAllKeyHistory();
+     return ResponseEntity.ok(keyHistory);
+ }
+ 
+ @GetMapping("/borrowed-keys")
+ public ResponseEntity<List<BorrowHistory>> getCurrentlyBorrowedKeys() {
+     List<BorrowHistory> borrowedKeys = adminService.getCurrentlyBorrowedKeys();
+     return ResponseEntity.ok(borrowedKeys);
+ }
+
+
+ 
 //New API Endpoints for Bicycle Management
 
  @PostMapping("/addbicycle")
@@ -175,6 +191,19 @@ public class AdminController {
      return ResponseEntity.ok(recentKeys);
  }
  
+ @GetMapping("/bicycle-history")
+ public ResponseEntity<List<BorrowHistory>> getAllBicycleHistory() {
+     List<BorrowHistory> bicycleHistory = adminService.getAllBicycleHistory();
+     return ResponseEntity.ok(bicycleHistory);
+ }
+
+
+ @GetMapping("/borrowed-bicycles")
+ public ResponseEntity<List<BorrowHistory>> getCurrentlyBorrowedBicycles() {
+     List<BorrowHistory> borrowedBicycles = adminService.getCurrentlyBorrowedBicycles();
+     return ResponseEntity.ok(borrowedBicycles);
+ }
+
  // USER MANAGEMENT
  
  // CHANGING THE USERS ROLE TO CR 

@@ -15,7 +15,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
-
+import org.springframework.security.web.firewall.HttpFirewall;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 @Configuration
 @EnableWebSecurity // ✅ Add this annotation
 public class SecurityConfig {
@@ -32,8 +33,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/api/admin/signup2", "/api/admin/login2").permitAll()
-                .requestMatchers("/api/admin/**").permitAll()
+                .requestMatchers("/", "/api/admin/signup2", "/api/admin/login2", "/api/student/book-classroom-key", "/api/**", "/api/history/all", "/api/history/**").permitAll()
+                .requestMatchers("/api/admin/**", "/api/student/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
@@ -79,4 +81,17 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+  
+
+    @Bean
+    public HttpFirewall relaxedFirewall() {
+        StrictHttpFirewall firewall = new StrictHttpFirewall();
+        firewall.setAllowUrlEncodedPercent(true); // Allows URL encoding (%)
+        firewall.setAllowUrlEncodedSlash(true); // Allows "/"
+        firewall.setAllowSemicolon(true); // Allows ";"
+        firewall.setAllowBackSlash(true); // Allows "\"
+        firewall.setAllowUrlEncodedPeriod(true); // Allows "."
+        return firewall;
+    }
+
 }

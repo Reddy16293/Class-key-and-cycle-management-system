@@ -1,10 +1,12 @@
 package com.example.demo.imp;
 
 import com.example.demo.model.Bicycle;
+import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.Role;
 import com.example.demo.model.User;
 import com.example.demo.repository.BicycleRepository;
+import com.example.demo.repository.BorrowHistoryRepository;
 import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
@@ -123,6 +125,30 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Bicycle> getRecentlyAddedCycle() {
         return bicycleRepository.findTop5ByOrderByIdDesc();
+    }
+    
+    
+    @Autowired
+    private BorrowHistoryRepository borrowHistoryRepository;
+    
+    @Override
+    public List<BorrowHistory> getAllKeyHistory() {
+        return borrowHistoryRepository.findByBicycleIsNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getCurrentlyBorrowedKeys() {
+        return borrowHistoryRepository.findByBicycleIsNullAndReturnTimeIsNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getAllBicycleHistory() {
+        return borrowHistoryRepository.findByBicycleIsNotNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getCurrentlyBorrowedBicycles() {
+        return borrowHistoryRepository.findByBicycleIsNotNullAndReturnTimeIsNull();
     }
 
 }

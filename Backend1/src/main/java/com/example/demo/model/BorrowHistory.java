@@ -16,8 +16,12 @@ public class BorrowHistory {
     private User student;
 
     @ManyToOne
-    @JoinColumn(name = "bicycle_id", nullable = false)
-    private Bicycle bicycle;
+    @JoinColumn(name = "bicycle_id", nullable=true)
+    private Bicycle bicycle; // Nullable since a user may borrow only a key
+
+    @ManyToOne
+    @JoinColumn(name = "classroom_key_id", nullable=true)
+    private ClassroomKey classroomKey; // Store classroom key borrowing
 
     @Column(nullable = false)
     private Timestamp borrowTime;
@@ -51,6 +55,14 @@ public class BorrowHistory {
 
     public void setBicycle(Bicycle bicycle) {
         this.bicycle = bicycle;
+    }
+
+    public ClassroomKey getClassroomKey() {
+        return classroomKey;
+    }
+
+    public void setClassroomKey(ClassroomKey classroomKey) {
+        this.classroomKey = classroomKey;
     }
 
     public Timestamp getBorrowTime() {
