@@ -12,13 +12,14 @@ import {
 } from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
 import { IoMenu } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const BorrowKeys = () => {
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Mock data for room availability
   const classrooms = [
@@ -45,9 +46,17 @@ const BorrowKeys = () => {
     </button>
     <button 
       onClick={() => navigate('/borrowkeys')} 
-      className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
+      className={`w-full py-2 flex items-center ${
+        sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+      } ${
+        location.pathname === '/borrowkeys' 
+          ? 'bg-blue-100 text-blue-600' 
+          : 'hover:bg-gray-200'
+      }`}
     >
-      <FaKey className={sidebarOpen ? "mr-2" : ""} /> 
+      <FaKey className={`${sidebarOpen ? "mr-2" : ""} ${
+        location.pathname === '/borrowkeys' ? 'text-blue-600' : ''
+      }`} /> 
       {sidebarOpen && "Borrow Keys"}
     </button>
     <button 
