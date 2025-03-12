@@ -1,28 +1,38 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Key, ArrowLeft, CheckCircle, XCircle, Edit, Trash } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { DataTable } from '../components/ui/data-table';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+
 const AllKeys = () => {
   const navigate = useNavigate();
-  
-  // Example data - in a real app, this would be fetched from a backend
-  const keys = [
-    { id: '1', blockName: 'Block A', classroomName: 'Room 101', isAvailable: true },
-    { id: '2', blockName: 'Block B', classroomName: 'Room 202', isAvailable: false },
-    { id: '3', blockName: 'Block C', classroomName: 'Room 303', isAvailable: true },
-    { id: '4', blockName: 'Block A', classroomName: 'Room 102', isAvailable: true },
-    { id: '5', blockName: 'Block D', classroomName: 'Room 404', isAvailable: false },
-    { id: '6', blockName: 'Block B', classroomName: 'Room 201', isAvailable: true },
-    { id: '7', blockName: 'Block D', classroomName: 'Room 405', isAvailable: true },
-    { id: '8', blockName: 'Block E', classroomName: 'Lab 1', isAvailable: false },
-    { id: '9', blockName: 'Block C', classroomName: 'Room 302', isAvailable: true },
-    { id: '10', blockName: 'Block A', classroomName: 'Room 105', isAvailable: false },
-    { id: '11', blockName: 'Block E', classroomName: 'Auditorium', isAvailable: true },
-    { id: '12', blockName: 'Block C', classroomName: 'Room 301', isAvailable: false },
-  ];
-  
+  const [keys, setKeys] = useState([]);  // 🔹 State to store keys
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch keys from API
+  useEffect(() => {
+    const fetchKeys = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/admin/all-keys', {
+          withCredentials: true, // 🔹 Ensures cookies/session are sent
+        });
+        setKeys(response.data);
+      } catch (err) {
+        console.error('Error fetching keys:', err);
+        setError('Failed to load keys');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKeys();
+  }, []);
+
+  // Table Columns
   const columns = [
     {
       key: 'blockName',
@@ -71,7 +81,7 @@ const AllKeys = () => {
       ),
     },
   ];
-  
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -113,14 +123,20 @@ const AllKeys = () => {
             <p className="text-gray-500 mb-5">
               This is a complete list of all classroom keys. You can edit, delete, or update their availability status.
             </p>
-            
-            {/* Data Table */}
-            <DataTable 
-              columns={columns} 
-              data={keys}
-              searchField="blockName"
-              className="border rounded-lg shadow-md"
-            />
+
+            {/* Show loading or error messages */}
+            {loading ? (
+              <p className="text-gray-600">Loading keys...</p>
+            ) : error ? (
+              <p className="text-red-600">{error}</p>
+            ) : (
+              <DataTable 
+                columns={columns} 
+                data={keys}
+                searchField="blockName"
+                className="border rounded-lg shadow-md"
+              />
+            )}
           </div>
         </div>
       </div>

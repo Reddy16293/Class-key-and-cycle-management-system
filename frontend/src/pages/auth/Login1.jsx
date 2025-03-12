@@ -49,24 +49,25 @@ const Login1 = () => {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/admin/login1", {
-        username,
+      const response = await axios.post("http://localhost:8080/api/admin/login2", {
+        userName: username,
         password,
       });
-
+  
       if (response.status === 200) {
-        const userRole = response.data.user.role;
-        if (userRole === "ADMIN") {
+        console.log("Response:", response.data); // Debugging purpose
+        if (response.data.role === "ADMIN") {
           setIsLoggedIn(true);
           navigate("/dashboard/Admin");
         } else {
-          setError("Invalid role");
+          setError("Access denied: Not an admin");
         }
       }
     } catch (error) {
-      setError("Invalid username or password");
+      setError(error.response?.data?.error || "Invalid username or password");
     }
   };
+  
 
   // Logout function
   const handleLogout = async () => {

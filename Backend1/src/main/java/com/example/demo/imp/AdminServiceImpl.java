@@ -1,14 +1,18 @@
 package com.example.demo.imp;
 
 import com.example.demo.model.Bicycle;
+import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
+import com.example.demo.model.Role;
 import com.example.demo.model.User;
 import com.example.demo.repository.BicycleRepository;
+import com.example.demo.repository.BorrowHistoryRepository;
 import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -25,7 +29,13 @@ public class AdminServiceImpl implements AdminService {
     private BicycleRepository bicycleRepository;
     @Autowired
     private ClassroomKeyRepository classroomKeyRepository;
+    
    
+   
+
+    
+    
+    
     @Override
     public ResponseEntity signup(User admin) {
         if (!"ADMIN".equals(admin.getRole())) {
@@ -43,7 +53,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public ResponseEntity login(User admin) {
-        Optional<User> existingAdmin = userRepository.findByUsername(admin.getUsername());
+        Optional<User> existingAdmin = userRepository.findByUserName(admin.getUserName());
         if (existingAdmin.isPresent() && existingAdmin.get().getPassword().equals(admin.getPassword()) && "ADMIN".equals(existingAdmin.get().getRole())) {
             
             // Prepare response with success message and user details
@@ -111,4 +121,34 @@ public class AdminServiceImpl implements AdminService {
     public List<Bicycle> listAllBicycles() {
         return bicycleRepository.findAll();
     }
+    
+    @Override
+    public List<Bicycle> getRecentlyAddedCycle() {
+        return bicycleRepository.findTop5ByOrderByIdDesc();
+    }
+    
+    
+    @Autowired
+    private BorrowHistoryRepository borrowHistoryRepository;
+    
+    @Override
+    public List<BorrowHistory> getAllKeyHistory() {
+        return borrowHistoryRepository.findByBicycleIsNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getCurrentlyBorrowedKeys() {
+        return borrowHistoryRepository.findByBicycleIsNullAndReturnTimeIsNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getAllBicycleHistory() {
+        return borrowHistoryRepository.findByBicycleIsNotNull();
+    }
+
+    @Override
+    public List<BorrowHistory> getCurrentlyBorrowedBicycles() {
+        return borrowHistoryRepository.findByBicycleIsNotNullAndReturnTimeIsNull();
+    }
+
 }
