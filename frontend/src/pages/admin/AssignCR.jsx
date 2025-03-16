@@ -1,7 +1,7 @@
 import { UserCheck } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
-import StudentList from '../components/StudentList';
+import Sidebar from '../../components/Sidebar';
+import Header from '../../components/Header';
+import StudentList from '../../components/StudentList';
 
 const AssignCR = () => {
   return (

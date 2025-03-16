@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Header from '../../components/Header';
 import { Key, CheckCircle2, PlusCircle, List } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'react-hot-toast';
 
 const KeyManagement1 = () => {
@@ -63,7 +63,8 @@ const KeyManagement1 = () => {
     } catch (error) {
       if (error.response && error.response.status === 409) {
         toast.error(error.response.data.message || 'Classroom already exists');
-      } else {
+      }
+      else {
         toast.error('Failed to add key');
       }
       console.error('Error adding key:', error);
@@ -128,10 +129,10 @@ const KeyManagement1 = () => {
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h2 className="text-xl font-semibold mb-4">Key Management Options</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Button onClick={() => navigate('/available-keys')} className="w-full p-4 bg-green-100 hover:bg-green-200">
+                  <Button onClick={() => navigate('/admin/available-keys')} className="w-full p-4 bg-green-100 hover:bg-green-200">
                     <CheckCircle2 className="text-green-600 mr-2" size={24} /> View Available Keys
                   </Button>
-                  <Button onClick={() => navigate('/all-keys')} className="w-full p-4 bg-blue-100 hover:bg-blue-200">
+                  <Button onClick={() => navigate('/admin/all-keys')} className="w-full p-4 bg-blue-100 hover:bg-blue-200">
                     <List className="text-blue-600 mr-2" size={24} /> View All Keys
                   </Button>
                 </div>

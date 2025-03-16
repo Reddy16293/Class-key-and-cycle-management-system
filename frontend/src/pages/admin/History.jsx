@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { History as HistoryIcon, Search, Filter } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { DataTable } from "../components/ui/data-table";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { DataTable } from "../../components/ui/data-table";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
 
 const History = () => {
   const [searchQuery, setSearchQuery] = useState("");

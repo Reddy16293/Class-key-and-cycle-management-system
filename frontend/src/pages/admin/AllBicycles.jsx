@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Bike, ArrowLeft, CheckCircle, XCircle, Edit, Trash, QrCode } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { DataTable } from '../components/ui/data-table';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
+import { Button } from '../../components/ui/button';
+import { DataTable } from '../../components/ui/data-table';
+import Sidebar from '../../components/Sidebar';
+import Header from '../../components/Header';
 
 const AllBicycles = () => {
   const navigate = useNavigate();
@@ -83,7 +83,7 @@ const AllBicycles = () => {
         <div className="max-w-6xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/bicycle-management')} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/admin/bicycle-management')} className="h-8 w-8">
                 <ArrowLeft size={16} />
               </Button>
               <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -91,7 +91,7 @@ const AllBicycles = () => {
                 All Bicycles
               </h1>
             </div>
-            <Button onClick={() => navigate('/bicycle-management')} className="bg-admin-purple text-white">
+            <Button onClick={() => navigate('/admin/bicycle-management')} className="bg-admin-purple text-white">
               Bicycle Management
             </Button>
           </div>

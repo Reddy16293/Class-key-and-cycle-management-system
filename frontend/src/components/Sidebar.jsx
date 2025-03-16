@@ -58,29 +58,29 @@ export const Sidebar = () => {
   <SidebarLink to="/dashboard/Admin" icon={Home} >
     {isOpen ? "Dashboard" : <Home />}
   </SidebarLink>
-  <SidebarLink to="/key-management" icon={Key}>
+  <SidebarLink to="/admin/key-management" icon={Key}>
     {isOpen ? "Key Management" : <Key />}
   </SidebarLink>
-  <SidebarLink to="/bicycle-management" icon={Bike}>
+  <SidebarLink to="/admin/bicycle-management" icon={Bike}>
     {isOpen ? "Bicycle Management" : <Bike />}
   </SidebarLink>
-  <SidebarLink to="/feedback" icon={MessageSquare}>
+  <SidebarLink to="/admin/feedback" icon={MessageSquare}>
     {isOpen ? "Feedback" : <MessageSquare />}
   </SidebarLink>
   
-  <SidebarLink to="/assign-cr" icon={Plus}>
+  <SidebarLink to="/admin/assign-cr" icon={Plus}>
     {isOpen ? "Assign CR" : <Plus />}
     </SidebarLink>
-    <SidebarLink to="/history" icon={History}>
+    <SidebarLink to="/admin/history" icon={History}>
     {isOpen ? "History" : <History />}
     </SidebarLink>
 
-    <SidebarLink to="/user-management" icon={Info}>
+    <SidebarLink to="/admin/user-management" icon={Info}>
     {isOpen ? "UserManagement" : "UM"}
   </SidebarLink>
 
 
-  <SidebarLink to="/profile" icon={User}>
+  <SidebarLink to="/admin/profile" icon={User}>
     {isOpen ? "Profile" : <User />}
     </SidebarLink>
 

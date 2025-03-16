@@ -15,8 +15,8 @@ import {
 import { IoMenu } from "react-icons/io5";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
-import "../styles/Viewhistory.css";
 
+import "../../styles/Viewhistory.css";
 const Viewhistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("keys");
