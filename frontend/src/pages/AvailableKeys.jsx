@@ -94,7 +94,7 @@ const AvailableKeys = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/key-management')}
+                onClick={() => navigate('/admin/key-management')}
                 className="h-9 w-9 rounded-full bg-gray-200 hover:bg-gray-300 transition"
               >
                 <ArrowLeft size={18} className="text-gray-700" />
@@ -105,7 +105,7 @@ const AvailableKeys = () => {
               </h1>
             </div>
             <Button
-              onClick={() => navigate('/key-management')}
+              onClick={() => navigate('/admin/key-management')}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition"
             >
               Key Management

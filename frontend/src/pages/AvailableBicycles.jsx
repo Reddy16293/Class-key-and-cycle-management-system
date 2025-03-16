@@ -31,6 +31,18 @@ const AvailableBicycles = () => {
     fetchAvailableBicycles();
   }, []);
 
+  // Handle marking a bicycle as borrowed
+  const handleMarkAsBorrowed = async (bicycleId) => {
+    try {
+      await axios.put(`http://localhost:8080/api/admin/mark-bicycle-borrowed/${bicycleId}`);
+      toast.success('Bicycle marked as borrowed successfully');
+      fetchAvailableBicycles(); // Refresh the list
+    } catch (error) {
+      console.error('Error marking bicycle as borrowed:', error);
+      toast.error('Failed to mark bicycle as borrowed');
+    }
+  };
+
   const columns = [
     {
       key: 'qrCode',
@@ -60,6 +72,7 @@ const AvailableBicycles = () => {
           size="sm"
           variant="outline"
           className="hover:bg-green-100 hover:border-green-400 transition-colors"
+          onClick={() => handleMarkAsBorrowed(bicycle.id)}
         >
           Mark as Borrowed
         </Button>
@@ -83,7 +96,7 @@ const AvailableBicycles = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/bicycle-management')}
+                onClick={() => navigate('/admin/bicycle-management')}
                 className="h-9 w-9 rounded-full hover:bg-gray-200"
               >
                 <ArrowLeft size={20} />
@@ -94,7 +107,7 @@ const AvailableBicycles = () => {
               </h1>
             </div>
             <Button
-              onClick={() => navigate('/bicycle-management')}
+              onClick={() => navigate('/admin/bicycle-management')}
               className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700 transition"
             >
               Bicycle Management

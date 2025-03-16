@@ -38,7 +38,7 @@ const StudentList = () => {
 
   // Function to extract roll number from email
   const extractRollNumber = (email) => {
-    const match = email.match(/_(\d+)@nitc\.ac\.in/); // Extracts roll number
+    const match = email.match(/_(b\d+[a-zA-Z]*)@nitc\.ac\.in/); // Extracts roll number
     return match ? match[1] : 'N/A'; // If no match, return "N/A"
   };
 

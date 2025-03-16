@@ -29,8 +29,13 @@ const UserManagement = () => {
         if (!response.ok) throw new Error("Failed to fetch users");
         let data = await response.json();
 
-        // Filter out ADMIN users
-        data = data.filter((user) => user.role === "CR" || user.role === "NON_CR");
+        // Filter out ADMIN users and add rollNumber field
+        data = data
+          .filter((user) => user.role === "CR" || user.role === "NON_CR")
+          .map((user) => ({
+            ...user,
+            rollNumber: extractRollNumber(user.email), // Extract roll number from email
+          }));
 
         setUsers(data);
       } catch (err) {
@@ -42,12 +47,19 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
+  // Function to extract roll number from email
+  const extractRollNumber = (email) => {
+    const match = email.match(/_(b\d+[a-zA-Z]*)@nitc\.ac\.in/); // Extracts roll number
+    return match ? match[1] : "N/A"; // If no match, return "N/A"
+  };
+
   // Filter users based on search query
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase())
+      user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.rollNumber.toLowerCase().includes(searchQuery.toLowerCase()) // Include roll number in search
   );
 
   // Handle delete confirmation
@@ -94,6 +106,11 @@ const UserManagement = () => {
       key: "email",
       header: "Email",
       cell: (row) => <div>{row.email}</div>,
+    },
+    {
+      key: "rollNumber",
+      header: "Roll Number",
+      cell: (row) => <div>{row.rollNumber}</div>,
     },
     {
       key: "role",
@@ -151,7 +168,7 @@ const UserManagement = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name, email or role..."
+                  placeholder="Search by name, email, roll number, or role..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -175,24 +192,23 @@ const UserManagement = () => {
 
       {/* Final Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-  <DialogContent className="bg-red-100">
-    <DialogHeader>
-      <DialogTitle className="text-xl text-red-700">Confirm Deletion</DialogTitle>
-      <DialogDescription className="text-base mt-4 text-red-600">
-        Are you sure you want to permanently delete {userToDelete?.name}? This action cannot be undone.
-      </DialogDescription>
-    </DialogHeader>
-    <DialogFooter className="mt-6 flex space-x-2">
-      <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="flex-1">
-        Cancel
-      </Button>
-      <Button   variant="destructive" onClick={confirmDelete} className="flex-1 bg-amber-900">
-        Delete
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
+        <DialogContent className="bg-red-100">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-red-700">Confirm Deletion</DialogTitle>
+            <DialogDescription className="text-base mt-4 text-red-600">
+              Are you sure you want to permanently delete {userToDelete?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex space-x-2">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} className="flex-1 bg-amber-900">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

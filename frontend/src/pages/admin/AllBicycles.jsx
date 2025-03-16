@@ -6,13 +6,25 @@ import { Button } from '../../components/ui/button';
 import { DataTable } from '../../components/ui/data-table';
 import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
+import toast from 'react-hot-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog';
 
 const AllBicycles = () => {
   const navigate = useNavigate();
   const [bicycles, setBicycles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bicycleToDelete, setBicycleToDelete] = useState(null); // Bicycle to delete
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Delete confirmation dialog
 
+  // Fetch all bicycles
   useEffect(() => {
     axios.get('http://localhost:8080/api/admin/all-bicycles')
       .then(response => {
@@ -26,6 +38,42 @@ const AllBicycles = () => {
       });
   }, []);
 
+  // Handle marking a bicycle as borrowed/available
+  const handleToggleAvailability = async (bicycleId, isAvailable) => {
+    try {
+      const endpoint = isAvailable
+        ? `http://localhost:8080/api/admin/mark-bicycle-borrowed/${bicycleId}`
+        : `http://localhost:8080/api/admin/mark-bicycle-available/${bicycleId}`;
+      await axios.put(endpoint);
+      toast.success(`Bicycle marked as ${isAvailable ? 'borrowed' : 'available'} successfully`);
+      setBicycles((prevBicycles) =>
+        prevBicycles.map((bicycle) =>
+          bicycle.id === bicycleId ? { ...bicycle, isAvailable: !isAvailable } : bicycle
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling bicycle availability:', error);
+      toast.error('Failed to update bicycle status');
+    }
+  };
+
+  // Handle deleting a bicycle
+  const handleDeleteBicycle = async () => {
+    if (!bicycleToDelete) return;
+
+    try {
+      await axios.delete(`http://localhost:8080/api/admin/delete-bicycle/${bicycleToDelete.id}`);
+      toast.success('Bicycle deleted successfully');
+      setBicycles((prevBicycles) => prevBicycles.filter((bicycle) => bicycle.id !== bicycleToDelete.id));
+      setShowDeleteDialog(false); // Close the dialog
+      setBicycleToDelete(null); // Reset the bicycle to delete
+    } catch (error) {
+      console.error('Error deleting bicycle:', error);
+      toast.error('Failed to delete bicycle');
+    }
+  };
+
+  // Table columns
   const columns = [
     {
       key: 'qrCode',
@@ -64,10 +112,22 @@ const AllBicycles = () => {
           <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600">
             <Edit size={16} />
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 text-red-600"
+            onClick={() => {
+              setBicycleToDelete(bicycle); // Set the bicycle to delete
+              setShowDeleteDialog(true); // Show the confirmation dialog
+            }}
+          >
             <Trash size={16} />
           </Button>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleToggleAvailability(bicycle.id, bicycle.isAvailable)}
+          >
             {bicycle.isAvailable ? 'Mark as Borrowed' : 'Mark as Available'}
           </Button>
         </div>
@@ -113,6 +173,26 @@ const AllBicycles = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-red-100">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-red-700">Confirm Deletion</DialogTitle>
+            <DialogDescription className="text-base mt-4 text-red-600">
+              Are you sure you want to delete the bicycle with QR Code <strong>{bicycleToDelete?.qrCode}</strong>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex space-x-2">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteBicycle} className="flex-1 bg-red-600">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
