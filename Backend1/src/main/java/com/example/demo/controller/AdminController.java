@@ -4,6 +4,7 @@ import com.example.demo.model.Bicycle;
 import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
+import com.example.demo.repository.BicycleRepository;
 import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
@@ -31,6 +32,8 @@ public class AdminController {
 	    private AdminService adminService;
 	  @Autowired
 	    private ClassroomKeyRepository classroomKeyRepository;
+	  @Autowired
+	    private BicycleRepository bicycleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -258,6 +261,50 @@ public class AdminController {
  public ResponseEntity<List<BorrowHistory>> getCurrentlyBorrowedBicycles() {
      List<BorrowHistory> borrowedBicycles = adminService.getCurrentlyBorrowedBicycles();
      return ResponseEntity.ok(borrowedBicycles);
+ }
+ 
+ @PutMapping("/mark-bicycle-borrowed/{bicycleId}")
+ public ResponseEntity<?> markBicycleAsBorrowed(@PathVariable Long bicycleId) {
+     try {
+         Optional<Bicycle> bicycleOptional = bicycleRepository.findById(bicycleId);
+         if (bicycleOptional.isPresent()) {
+             Bicycle bicycle = bicycleOptional.get();
+             bicycle.setAvailable(false); // Mark as borrowed
+             bicycleRepository.save(bicycle);
+             return ResponseEntity.ok("Bicycle marked as borrowed successfully");
+         } else {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bicycle not found");
+         }
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking bicycle as borrowed");
+     }
+ }
+ 
+ @PutMapping("/mark-bicycle-available/{bicycleId}")
+ public ResponseEntity<?> markBicycleAsAvailable(@PathVariable Long bicycleId) {
+     try {
+         Optional<Bicycle> bicycleOptional = bicycleRepository.findById(bicycleId);
+         if (bicycleOptional.isPresent()) {
+             Bicycle bicycle = bicycleOptional.get();
+             bicycle.setAvailable(true); // Mark as available
+             bicycleRepository.save(bicycle);
+             return ResponseEntity.ok("Bicycle marked as available successfully");
+         } else {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bicycle not found");
+         }
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking bicycle as available");
+     }
+ }
+ 
+ @DeleteMapping("/delete-bicycle/{bicycleId}")
+ public ResponseEntity<?> deleteBicycle(@PathVariable Long bicycleId) {
+     try {
+         bicycleRepository.deleteById(bicycleId);
+         return ResponseEntity.ok("Bicycle deleted successfully");
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting bicycle");
+     }
  }
 
  // USER MANAGEMENT
