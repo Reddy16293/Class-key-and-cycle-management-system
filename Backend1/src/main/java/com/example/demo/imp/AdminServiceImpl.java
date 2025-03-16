@@ -11,9 +11,11 @@ import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.HashMap;
@@ -72,8 +74,17 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void addClassroom(ClassroomKey classroomKey) {
+        Optional<ClassroomKey> existingKey = classroomKeyRepository.findByBlockNameAndClassroomName(
+            classroomKey.getBlockName(), classroomKey.getClassroomName()
+        );
+
+        if (existingKey.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Classroom already exists");
+        }
+
         classroomKeyRepository.save(classroomKey);
     }
+
     @Override
     public List<ClassroomKey> listAvailableKeys() {
         return classroomKeyRepository.findByIsAvailable(1);

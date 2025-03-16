@@ -4,6 +4,7 @@ import com.example.demo.model.Bicycle;
 import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
+import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
 import com.example.demo.service.StudentService;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,8 @@ public class AdminController {
    
 	 @Autowired
 	    private AdminService adminService;
-	
+	  @Autowired
+	    private ClassroomKeyRepository classroomKeyRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -117,9 +120,62 @@ public class AdminController {
  }
  
  @PostMapping("/addclassrooms")
- public ResponseEntity<ClassroomKey> addClassroom(@RequestBody ClassroomKey classroomKey) {
-     adminService.addClassroom(classroomKey);
-     return ResponseEntity.status(HttpStatus.CREATED).body(classroomKey);
+ public ResponseEntity<String> addClassroom(@RequestBody ClassroomKey classroomKey) {
+     Optional<ClassroomKey> existingKey = classroomKeyRepository.findByBlockNameAndClassroomName(
+         classroomKey.getBlockName(), classroomKey.getClassroomName()
+     );
+
+     if (existingKey.isPresent()) {
+         throw new ResponseStatusException(HttpStatus.CONFLICT, "Classroom already exists");
+     }
+
+     classroomKeyRepository.save(classroomKey);
+     return ResponseEntity.ok("Classroom added successfully");
+ }
+
+ 
+ @PutMapping("/mark-key-borrowed/{keyId}")
+ public ResponseEntity<?> markKeyAsBorrowed(@PathVariable Long keyId) {
+     try {
+         Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
+         if (keyOptional.isPresent()) {
+        	 ClassroomKey key = keyOptional.get();
+        	 key.setIsAvailable(0); // Mark as borrowed
+             classroomKeyRepository.save(key);
+             return ResponseEntity.ok("Key marked as borrowed successfully");
+         } else {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Key not found");
+         }
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking key as borrowed");
+     }
+ }
+ 
+ @PutMapping("/mark-key-available/{keyId}")
+ public ResponseEntity<?> markKeyAsAvailable(@PathVariable Long keyId) {
+     try {
+         Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
+         if (keyOptional.isPresent()) {
+        	 ClassroomKey key = keyOptional.get();
+             key.setIsAvailable(1); // Mark as available
+             classroomKeyRepository.save(key);
+             return ResponseEntity.ok("Key marked as available successfully");
+         } else {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Key not found");
+         }
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking key as available");
+     }
+ }
+ 
+ @DeleteMapping("/delete-key/{keyId}")
+ public ResponseEntity<?> deleteKey(@PathVariable Long keyId) {
+     try {
+         classroomKeyRepository.deleteById(keyId);
+         return ResponseEntity.ok("Key deleted successfully");
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting key");
+     }
  }
  
  /*@GetMapping("/check-key-availability/{keyId}")
@@ -237,6 +293,17 @@ public class AdminController {
      List<User> users = userRepository.findAll();
      return ResponseEntity.ok(users);
  }
+ 
+ @DeleteMapping("/delete-user/{userId}")
+ public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+     try {
+         userRepository.deleteById(userId);
+         return ResponseEntity.ok("User deleted successfully");
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting user");
+     }
+ }
+
 
  
 }
