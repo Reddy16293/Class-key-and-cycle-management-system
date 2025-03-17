@@ -33,9 +33,9 @@ const Admindashboard = () => {
           {/* Dashboard Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 mt-8">
             {[
-              { title: "Key Management", icon: <Key size={40} />, path: "/key-management" },
-              { title: "Bicycle Management", icon: <Bike size={40} />, path: "/bicycle-management" },
-              { title: "View Feedback", icon: <MessageSquare size={40} />, path: "/feedback" }
+              { title: "Key Management", icon: <Key size={40} />, path: "/admin/key-management" },
+              { title: "Bicycle Management", icon: <Bike size={40} />, path: "/admin/bicycle-management" },
+              { title: "View Feedback", icon: <MessageSquare size={40} />, path: "/admin/feedback" }
             ].map((item, index) => (
               <div
                 key={index}
@@ -54,9 +54,9 @@ const Admindashboard = () => {
           {/* Action Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             {[
-              { title: "View Key Status & Borrowings", icon: <Key size={20} />, path: "/key-management" },
-              { title: "View Bicycle Status & Borrowings", icon: <Bike size={20} />, path: "/bicycle-management" },
-              { title: "View Feedbacks", icon: <MessageSquare size={20} />, path: "/feedback", span: true }
+              { title: "View Key Status & Borrowings", icon: <Key size={20} />, path: "/admin/key-management" },
+              { title: "View Bicycle Status & Borrowings", icon: <Bike size={20} />, path: "/admin/bicycle-management" },
+              { title: "View Feedbacks", icon: <MessageSquare size={20} />, path: "/admin/feedback", span: true }
             ].map((item, index) => (
               <div
                 key={index}
