@@ -12,6 +12,7 @@ const AvailableKeys = () => {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch available keys from the backend
   useEffect(() => {
     const fetchAvailableKeys = async () => {
       try {
@@ -27,6 +28,24 @@ const AvailableKeys = () => {
     fetchAvailableKeys();
   }, []);
 
+  // Handle marking a key as borrowed
+  const handleMarkAsBorrowed = async (keyId) => {
+    try {
+      // Call the API to mark the key as borrowed
+      await axios.put(`http://localhost:8080/api/admin/mark-key-borrowed/${keyId}`);
+
+      // Update the local state to remove the key from the list
+      setKeys((prevKeys) => prevKeys.filter((key) => key.id !== keyId));
+
+      // Show a success message
+      alert('Key marked as borrowed successfully!');
+    } catch (error) {
+      console.error('Error marking key as borrowed:', error);
+      alert('Failed to mark key as borrowed. Please try again.');
+    }
+  };
+
+  // Table columns
   const columns = [
     {
       key: 'blockName',
@@ -51,11 +70,12 @@ const AvailableKeys = () => {
     {
       key: 'actions',
       header: 'Actions',
-      cell: () => (
-        <Button 
-          size="sm" 
-          variant="outline" 
+      cell: (key) => (
+        <Button
+          size="sm"
+          variant="outline"
           className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition"
+          onClick={() => handleMarkAsBorrowed(key.id)} // Add onClick handler
         >
           Mark as Borrowed
         </Button>
@@ -71,10 +91,10 @@ const AvailableKeys = () => {
         <div className="max-w-full p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate('/key-management')}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/admin/key-management')}
                 className="h-9 w-9 rounded-full bg-gray-200 hover:bg-gray-300 transition"
               >
                 <ArrowLeft size={18} className="text-gray-700" />
@@ -84,8 +104,8 @@ const AvailableKeys = () => {
                 Available Classroom Keys
               </h1>
             </div>
-            <Button 
-              onClick={() => navigate('/key-management')} 
+            <Button
+              onClick={() => navigate('/admin/key-management')}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition"
             >
               Key Management
@@ -99,8 +119,8 @@ const AvailableKeys = () => {
             {loading ? (
               <p className="text-center text-gray-500">Loading available keys...</p>
             ) : (
-              <DataTable 
-                columns={columns} 
+              <DataTable
+                columns={columns}
                 data={keys}
                 searchField="blockName"
                 className="border rounded-lg shadow-md"

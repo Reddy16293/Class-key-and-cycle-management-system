@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
 import axios from "axios";
 import { Bike, CheckCircle2, PlusCircle, List } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
+} from "../../components/ui/select";
 import toast from "react-hot-toast";
 
 const BicycleManagement = () => {
@@ -136,7 +136,7 @@ const BicycleManagement = () => {
                   <Button
                     variant="outline"
                     className="h-auto py-6 flex flex-col items-center justify-center gap-3 border border-gray-300 hover:border-gray-400"
-                    onClick={() => navigate("/available-bicycles")}
+                    onClick={() => navigate("/admin/available-bicycles")}
                   >
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
                       <CheckCircle2 className="text-green-600" size={24} />
@@ -152,7 +152,7 @@ const BicycleManagement = () => {
                   <Button
                     variant="outline"
                     className="h-auto py-6 flex flex-col items-center justify-center gap-3 border border-gray-300 hover:border-gray-400"
-                    onClick={() => navigate("/all-bicycles")}
+                    onClick={() => navigate("/admin/all-bicycles")}
                   >
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
                       <List className="text-blue-600" size={24} />
@@ -171,7 +171,7 @@ const BicycleManagement = () => {
               <div className="p-6 bg-white shadow-md rounded-lg mt-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold">Recently Added Bicycles</h2>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/all-bicycles")}>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/admin/all-bicycles")}>
                     View All
                   </Button>
                 </div>
