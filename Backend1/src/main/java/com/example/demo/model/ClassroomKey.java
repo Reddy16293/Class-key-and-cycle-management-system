@@ -19,7 +19,9 @@ public class ClassroomKey {
     @Column(nullable = false)
     private int isAvailable;
 
-    // Getters and Setters
+  
+
+	// Getters and Setters
     public Long getId() {
         return id;
     }

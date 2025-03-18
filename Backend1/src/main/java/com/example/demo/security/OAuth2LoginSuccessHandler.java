@@ -44,7 +44,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // Redirect based on user role
         switch (user.getRole()) {
             case "CR":
-                response.sendRedirect("http://localhost:5173/fake");
+                response.sendRedirect("http://localhost:5173/dashboard/student");
                 break;
             default:
                 response.sendRedirect("http://localhost:5173/dashboard/student");

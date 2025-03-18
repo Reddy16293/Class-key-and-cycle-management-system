@@ -37,9 +37,12 @@ public class AdminController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AdminController(UserRepository userRepository,ClassroomKeyRepository classroomKeyRepository, AdminService adminService,BicycleRepository bicycleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.classroomKeyRepository = classroomKeyRepository;
+        this.bicycleRepository = bicycleRepository;
+        this.adminService = adminService;
     }
      
     @GetMapping("/api/user")
@@ -142,24 +145,30 @@ public class AdminController {
      try {
          Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
          if (keyOptional.isPresent()) {
-        	 ClassroomKey key = keyOptional.get();
-        	 key.setIsAvailable(0); // Mark as borrowed
+             ClassroomKey key = keyOptional.get();
+             key.setIsAvailable(0); // Mark as borrowed
              classroomKeyRepository.save(key);
              return ResponseEntity.ok("Key marked as borrowed successfully");
          } else {
              return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Key not found");
          }
      } catch (Exception e) {
+         e.printStackTrace(); // Add this line to print the exception
          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking key as borrowed");
      }
  }
  
  @PutMapping("/mark-key-available/{keyId}")
  public ResponseEntity<?> markKeyAsAvailable(@PathVariable Long keyId) {
+     // Validate keyId
+     if (keyId == null) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Key ID cannot be null");
+     }
+
      try {
          Optional<ClassroomKey> keyOptional = classroomKeyRepository.findById(keyId);
          if (keyOptional.isPresent()) {
-        	 ClassroomKey key = keyOptional.get();
+             ClassroomKey key = keyOptional.get();
              key.setIsAvailable(1); // Mark as available
              classroomKeyRepository.save(key);
              return ResponseEntity.ok("Key marked as available successfully");
@@ -170,17 +179,29 @@ public class AdminController {
          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking key as available");
      }
  }
- 
  @DeleteMapping("/delete-key/{keyId}")
  public ResponseEntity<?> deleteKey(@PathVariable Long keyId) {
+     // Validate keyId
+     if (keyId == null) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Key ID cannot be null");
+     }
+     if (keyId <= 0) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Key ID");
+     }
+
      try {
+         // Check if the key exists before deleting
+         if (!classroomKeyRepository.existsById(keyId)) {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Key not found");
+         }
+
+         // Delete the key
          classroomKeyRepository.deleteById(keyId);
          return ResponseEntity.ok("Key deleted successfully");
      } catch (Exception e) {
          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting key");
      }
  }
- 
  /*@GetMapping("/check-key-availability/{keyId}")
  public ResponseEntity<Integer> checkKeyAvailability(@PathVariable Long keyId) {  // Use @PathVariable instead of @RequestParam
      return adminService.checkKeyAvailability(keyId);
@@ -222,10 +243,18 @@ public class AdminController {
 //New API Endpoints for Bicycle Management
 
  @PostMapping("/addbicycle")
- public ResponseEntity<Bicycle> addBicycle(@RequestBody Bicycle bicycle) {
-     adminService.addBicycle(bicycle);
-     return ResponseEntity.status(HttpStatus.CREATED).body(bicycle);
+ public ResponseEntity<?> addBicycle(@RequestBody Bicycle bicycle) {
+     try {
+         if (bicycleRepository.existsByQrCode(bicycle.getQrCode())) {
+             return ResponseEntity.status(HttpStatus.CONFLICT).body("Bicycle with this QR Code already exists.");
+         }
+         adminService.addBicycle(bicycle);
+         return ResponseEntity.status(HttpStatus.CREATED).body(bicycle);
+     } catch (Exception e) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while adding the bicycle.");
+     }
  }
+
 
  @PostMapping("/bookbicycle/{bicycleId}")
  public ResponseEntity<String> bookBicycle(@PathVariable Long bicycleId, @RequestParam Long userId) {
@@ -352,5 +381,4 @@ public class AdminController {
  }
 
 
- 
 }
