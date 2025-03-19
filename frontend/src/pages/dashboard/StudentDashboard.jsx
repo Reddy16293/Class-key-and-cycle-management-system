@@ -133,13 +133,18 @@ const StudentHome = () => {
           </button>
         </nav>
         <button
-          className={`mt-auto text-white hover:bg-blue-500 flex items-center ${
-            !sidebarOpen ? "justify-center" : ""
-          } py-2 px-4 rounded-lg transition-all`}
-        >
-          <FaSignOutAlt className={sidebarOpen ? "mr-2" : ""} />
-          {sidebarOpen && "Sign Out"}
-        </button>
+            onClick={() => navigate("/")}
+            className={`w-full py-2 flex items-center ${
+              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+            } ${
+              location.pathname === "/"
+                ? "bg-blue-500 text-white"
+                : "text-white hover:bg-blue-500"
+            } rounded-lg transition-all`}
+          >
+            <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
+            {sidebarOpen && "Sign Out"}
+          </button>
       </aside>
 
       {/* Main Content */}
