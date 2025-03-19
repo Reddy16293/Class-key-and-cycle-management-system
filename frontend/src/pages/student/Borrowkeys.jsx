@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // Import Axios
 import {
   FaKey,
   FaBicycle,
@@ -23,21 +24,73 @@ const BorrowKeys = () => {
   const [startPeriod, setStartPeriod] = useState("PM");
   const [endTime, setEndTime] = useState("5.00");
   const [endPeriod, setEndPeriod] = useState("PM");
+  const [classrooms, setClassrooms] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Mock data for room availability
-  const classrooms = [
-    { room: "101", available: true },
-    { room: "102", available: false },
-    { room: "103", available: true },
-  ];
+  // Process block name and floor
+  const processBlockName = (blockName) => {
+    return blockName.replace(" Block", "").trim(); // Remove "Block" and trim whitespace
+  };
 
-  const handleBorrowClick = (roomNumber) => {
+  const processFloor = (floor) => {
+    return floor.replace(/\D/g, ""); // Remove non-numeric characters
+  };
+
+  // Fetch available rooms based on building and floor
+  const fetchAvailableRooms = async (blockName, floor) => {
+    try {
+      // Process block name and floor
+      const processedBlockName = processBlockName(blockName);
+      const processedFloor = processFloor(floor);
+
+      console.log(`Fetching rooms for: Block = ${processedBlockName}, Floor = ${processedFloor}`);
+
+      // Make API call using Axios
+      const response = await axios.get(
+        `http://localhost:8080/api/student/available-rooms/${processedBlockName}/${processedFloor}`,
+        { headers: { "Accept": "application/json" } }  // Ensure JSON response
+      );
+
+      // Log full response for debugging
+      console.log("Full API Response:", response);
+      console.log("API Response Data:", response.data);
+
+      // Ensure response is an array before setting state
+      if (Array.isArray(response.data)) {
+        console.log("✅ Valid array received:", response.data);
+        setClassrooms(response.data);
+      } else {
+        console.error("❌ Invalid response format. Expected an array but got:", response.data);
+        throw new Error("Invalid response format: Expected an array");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching available rooms:", error);
+
+      // Handle specific Axios errors
+      if (error.response) {
+        console.error("❌ Server responded with:", error.response.status, error.response.data);
+      } else if (error.request) {
+        console.error("❌ No response received from server.");
+      } else {
+        console.error("❌ Error setting up the request:", error.message);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (building && floor) {
+      fetchAvailableRooms(building, floor);
+    }
+  }, [building, floor]);
+
+  // Handle borrowing a classroom key
+  const handleBorrowClick = (room) => {
     setSelectedRoom({
       building,
       floor,
-      room: roomNumber
+      room: room.classroomName,
+      keyId: room.id,
     });
   };
 
@@ -45,14 +98,52 @@ const BorrowKeys = () => {
     setSelectedRoom(null);
   };
 
-  const handleBookNow = () => {
-    // Add your booking logic here
-    console.log("Booking details:", {
-      ...selectedRoom,
-      startTime: `${startTime} ${startPeriod}`,
-      endTime: `${endTime} ${endPeriod}`
-    });
-    handleCancel();
+  const handleBookNow = async () => {
+    if (!selectedRoom) return;
+  
+    try {
+      // Step 1: Fetch the current user's information
+      const userResponse = await axios.get("http://localhost:8080/api/user", {
+        withCredentials: true, // Include cookies for authentication
+      });
+  
+      const user = userResponse.data;
+      if (!user || !user.id) {
+        alert("You are not authenticated. Please log in.");
+        return;
+      }
+  
+      const userId = user.id; // Get the userId from the response
+  
+      console.log("Booking key with:", {
+        keyId: selectedRoom.keyId,
+        userId: userId,
+      });
+  
+      // Step 2: Book the classroom key using the userId
+      const bookingResponse = await axios.post(
+        `http://localhost:8080/api/student/book-classroom-key/${selectedRoom.keyId}`,
+        null, // No request body needed
+        {
+          params: {
+            userId: userId, // Use the fetched userId
+          },
+          withCredentials: true, // Include cookies for authentication
+        }
+      );
+  
+      console.log("Booking response:", bookingResponse);
+      alert(bookingResponse.data); // Show success message
+      // Refresh available rooms after booking
+      fetchAvailableRooms(building, floor);
+      setSelectedRoom(null); // Close the booking form
+    } catch (error) {
+      console.error("Error booking key:", error);
+      if (error.response) {
+        console.error("Server responded with:", error.response.status, error.response.data);
+      }
+      alert("Failed to book the key. Please try again.");
+    }
   };
 
   return (
@@ -204,6 +295,9 @@ const BorrowKeys = () => {
                 >
                   <option value="">Select a building</option>
                   <option value="ELHC Block">ELHC Block</option>
+                  <option value="A Block">A Block</option>
+                  <option value="B Block">B Block</option>
+                  <option value="C Block">C Block</option>
                 </select>
                 <select
                   className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -215,6 +309,9 @@ const BorrowKeys = () => {
                     {building ? "Select a floor" : "Select a building first"}
                   </option>
                   <option value="1st Floor">1st Floor</option>
+                  <option value="2nd Floor">2nd Floor</option>
+                  <option value="3rd Floor">3rd Floor</option>
+                  <option value="4th Floor">4th Floor</option>
                 </select>
               </div>
 
@@ -233,28 +330,28 @@ const BorrowKeys = () => {
                     Available Classrooms - {building}, {floor}
                   </h2>
                   <ul className="space-y-3">
-                    {classrooms.map(({ room, available }) => (
+                    {classrooms.map((room) => (
                       <li
-                        key={room}
+                        key={room.id}
                         className="p-4 flex items-center justify-between border rounded-lg hover:shadow-md transition-shadow"
                       >
                         <span
                           className={`font-medium ${
-                            available ? "text-green-600" : "text-red-600"
+                            room.isAvailable === 1 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          Room {room} -{" "}
+                          Room {room.classroomName} -{" "}
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-sm ${
-                              available
+                              room.isAvailable === 1
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
                             }`}
                           >
-                            {available ? "Available" : "In Use"}
+                            {room.isAvailable === 1 ? "Available" : "In Use"}
                           </span>
                         </span>
-                        {available ? (
+                        {room.isAvailable === 1 ? (
                           <button
                             onClick={() => handleBorrowClick(room)}
                             className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-600 transition-colors"
