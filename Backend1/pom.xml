@@ -102,11 +102,6 @@
 </dependency>
 
 
-		<dependency>
-			<groupId>com.example</groupId>
-			<artifactId>GoogleAuth</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
