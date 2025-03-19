@@ -15,6 +15,8 @@ public interface ClassroomKeyRepository extends JpaRepository<ClassroomKey, Long
 	 boolean existsByBlockNameAndClassroomName(String blockName, String classroomName);
 	 @Query("SELECT c FROM ClassroomKey c WHERE LOWER(TRIM(c.blockName)) = LOWER(TRIM(:blockName)) AND LOWER(TRIM(c.classroomName)) = LOWER(TRIM(:classroomName))")
 	 Optional<ClassroomKey> findByBlockNameAndClassroomName(@Param("blockName") String blockName, @Param("classroomName") String classroomName);
-
+    
+	  List<ClassroomKey> findByBlockNameAndFloorAndIsAvailable(String blockName, String floor, int isAvailable);
+	 
 	 
 }
