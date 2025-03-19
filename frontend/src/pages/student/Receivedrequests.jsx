@@ -61,9 +61,11 @@ const ReceivedRequests = () => {
       if (!response.ok) {
         throw new Error("Failed to decline request");
       }
-      // Remove the declined request from the list
+      // Update the request status locally
       setRequests((prevRequests) =>
-        prevRequests.filter((req) => req.id !== requestId)
+        prevRequests.map((req) =>
+          req.id === requestId ? { ...req, status: "DECLINED" } : req
+        )
       );
     } catch (error) {
       console.error("Error declining request:", error);
@@ -235,8 +237,10 @@ const ReceivedRequests = () => {
                       Approve
                     </button>
                   </>
-                ) : (
+                ) : req.status === "APPROVED" ? (
                   <span className="text-green-600 font-bold">Approved</span>
+                ) : (
+                  <span className="text-red-600 font-bold">Declined</span>
                 )}
               </div>
             </div>
