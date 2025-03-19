@@ -110,6 +110,19 @@ public class StudentController {
             .contentType(MediaType.APPLICATION_JSON)  // ✅ Ensure JSON response
             .body(availableRooms);
     }
+    
+    @GetMapping("/all-keys/{blockName}/{floor}")
+    public ResponseEntity<List<ClassroomKey>> getAllKeysOnFloor(
+            @PathVariable String blockName, @PathVariable String floor) {
+        List<ClassroomKey> allKeys = classroomKeyRepository
+            .findByBlockNameAndFloor(blockName, floor); // Fetch all keys on the floor
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(allKeys);
+    }
+    
+    
 
 
     @GetMapping("/check-key-availability/{keyId}")

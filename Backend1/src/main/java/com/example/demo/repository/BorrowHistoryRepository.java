@@ -1,8 +1,11 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.BorrowHistory;
+import com.example.demo.model.ClassroomKey;
+import com.example.demo.model.User;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -23,5 +26,11 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
     List<BorrowHistory> findByBicycleIsNotNullAndReturnTimeIsNull();
     
     List<BorrowHistory> findByStudentId(Long studentId);
+    
+ // Find if a student already has this key and has not returned it
+    Optional<BorrowHistory> findByStudentAndClassroomKeyAndIsReturned(User student, ClassroomKey classroomKey, boolean isReturned);
+
+    // Find if the key is currently borrowed by anyone
+    Optional<BorrowHistory> findByClassroomKeyAndIsReturned(ClassroomKey classroomKey, boolean isReturned);
 }
 
