@@ -84,7 +84,7 @@ export const Sidebar = () => {
     {isOpen ? "Profile" : <User />}
     </SidebarLink>
 
-  <SidebarLink to="/about" icon={Info}>
+  <SidebarLink to="/admin/about" icon={Info}>
     {isOpen ? "About" : <Info />}
   </SidebarLink>
   

@@ -47,7 +47,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 response.sendRedirect("http://localhost:5173/dashboard/student");
                 break;
             default:
-                response.sendRedirect("http://localhost:5173/dashboard/student");
+                response.sendRedirect("http://localhost:5173/dashboard/student_nonCR");
         }
     }
 }

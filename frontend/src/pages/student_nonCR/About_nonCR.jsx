@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
+import { FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaHome } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
-import { FiClock } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const About = () => {
+const About_nonCR = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,72 +11,81 @@ const About = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className={`bg-white shadow-md flex flex-col p-4 ${sidebarOpen ? "w-64" : "w-16"} transition-all`}>
-        <button className="mb-4 p-2" onClick={() => setSidebarOpen(!sidebarOpen)}>
-        <IoMenu className="text-xl" />
+      <aside
+        className={`bg-gradient-to-b from-blue-600 to-blue-700 shadow-lg flex flex-col p-4 ${
+          sidebarOpen ? "w-64" : "w-16"
+        } transition-all duration-300`}
+      >
+        <button
+          className="mb-4 p-2 text-white hover:bg-blue-500 rounded-full transition-colors"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <IoMenu className="text-xl" />
         </button>
-        {sidebarOpen && <h2 className="text-xl font-bold mb-6">Student Portal</h2>}
-        <nav className="flex-1 space-y-4">
-          <button 
-            onClick={() => navigate('/dashboard/student')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
+        {sidebarOpen && (
+          <h2 className="text-xl font-bold mb-6 text-white">Student Portal</h2>
+        )}
+        <nav className="flex-1 space-y-2">
+          <button
+            onClick={() => navigate("/dashboard/student_nonCR")}
+            className={`w-full py-2 flex items-center ${
+              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+            } ${
+              location.pathname === "/dashboard/student_nonCR"
+                ? "bg-blue-500 text-white"
+                : "text-white hover:bg-blue-500"
+            } rounded-lg transition-all`}
           >
-            <FaHome className={sidebarOpen ? "mr-2" : ""} /> 
+            <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
             {sidebarOpen && "Dashboard"}
           </button>
-          <button 
-            onClick={() => navigate('/borrowkeys')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
+
+          <button
+            onClick={() => navigate("/borrowbicycle_nonCR")}
+            className={`w-full py-2 flex items-center ${
+              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+            } ${
+              location.pathname === "/borrowbicycle_nonCR"
+                ? "bg-blue-500 text-white"
+                : "text-white hover:bg-blue-500"
+            } rounded-lg transition-all`}
           >
-            <FaKey className={sidebarOpen ? "mr-2" : ""} /> 
-            {sidebarOpen && "Borrow Keys"}
-          </button>
-          <button 
-            onClick={() => navigate('/borrowbicycle')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-          >
-            <FaBicycle className={sidebarOpen ? "mr-2" : ""} /> 
+            <FaBicycle className={`${sidebarOpen ? "mr-2" : ""}`} />
             {sidebarOpen && "Borrow Bicycles"}
           </button>
-          <button 
-            onClick={() => navigate('/receivedrequests')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
+          <button
+            onClick={() => navigate("/viewhistory_nonCR")}
+            className={`w-full py-2 flex items-center ${
+              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+            } ${
+              location.pathname === "/viewhistory_nonCR"
+                ? "bg-blue-500 text-white"
+                : "text-white hover:bg-blue-500"
+            } rounded-lg transition-all`}
           >
-            <FaEnvelope className={sidebarOpen ? "mr-2" : ""} /> 
-            {sidebarOpen && "Received Requests"}
-          </button>
-          <button 
-            onClick={() => navigate('/sentrequests')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-          >
-            <FiClock className={sidebarOpen ? "mr-2" : ""} /> 
-            {sidebarOpen && "Sent Requests"}
-          </button>
-          <button 
-            onClick={() => navigate('/viewhistory')} 
-            className={`w-full py-2 hover:bg-gray-200 flex items-center ${sidebarOpen ? "px-4 text-left" : "px-2 justify-center"}`}
-          >
-            <FaHistory className={sidebarOpen ? "mr-2" : ""} /> 
+            <FaHistory className={`${sidebarOpen ? "mr-2" : ""}`} />
             {sidebarOpen && "View History"}
           </button>
-          <button 
-          onClick={() => navigate('/s-about')} 
-          className={`w-full py-2 flex items-center ${
-            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-          } ${
-            location.pathname === '/s-about' 
-              ? 'bg-blue-100 text-blue-600' 
-              : 'hover:bg-gray-200'
-          }`}
-        >
-          <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""} ${
-            location.pathname === '/s-about' ? 'text-blue-600' : ''
-          }`} /> 
-          {sidebarOpen && "About"}
-    </button>
+          <button
+            onClick={() => navigate("/s-about_nonCR")}
+            className={`w-full py-2 flex items-center ${
+                sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+            } ${
+                location.pathname === "/s-about_nonCR" // Update this line
+                ? "bg-blue-500 text-white"
+                : "text-white hover:bg-blue-500"
+            } rounded-lg transition-all`}
+            >
+            <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""}`} />
+            {sidebarOpen && "About"}
+          </button>
         </nav>
-        <button className={`mt-auto text-red-500 flex items-center ${!sidebarOpen ? "justify-center" : ""}`}>
-          <FaSignOutAlt className={sidebarOpen ? "mr-2" : ""} /> 
+        <button
+          className={`mt-auto text-white hover:bg-blue-500 flex items-center ${
+            !sidebarOpen ? "justify-center" : ""
+          } py-2 px-4 rounded-lg transition-all`}
+        >
+          <FaSignOutAlt className={sidebarOpen ? "mr-2" : ""} />
           {sidebarOpen && "Sign Out"}
         </button>
       </aside>
@@ -137,4 +145,4 @@ const About = () => {
   );
 };
 
-export default About;
+export default About_nonCR;
