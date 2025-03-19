@@ -18,6 +18,11 @@ const BorrowKeys = () => {
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [startTime, setStartTime] = useState("2.00");
+  const [startPeriod, setStartPeriod] = useState("PM");
+  const [endTime, setEndTime] = useState("5.00");
+  const [endPeriod, setEndPeriod] = useState("PM");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,6 +32,28 @@ const BorrowKeys = () => {
     { room: "102", available: false },
     { room: "103", available: true },
   ];
+
+  const handleBorrowClick = (roomNumber) => {
+    setSelectedRoom({
+      building,
+      floor,
+      room: roomNumber
+    });
+  };
+
+  const handleCancel = () => {
+    setSelectedRoom(null);
+  };
+
+  const handleBookNow = () => {
+    // Add your booking logic here
+    console.log("Booking details:", {
+      ...selectedRoom,
+      startTime: `${startTime} ${startPeriod}`,
+      endTime: `${endTime} ${endPeriod}`
+    });
+    handleCancel();
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -156,87 +183,170 @@ const BorrowKeys = () => {
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Classroom Keys
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Select a building and floor to see available classroom keys
-          </p>
-
-          {/* Building and Floor Selection */}
-          <div className="flex space-x-4 mb-8">
-            <select
-              className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={building}
-              onChange={(e) => {
-                setBuilding(e.target.value);
-                setFloor("");
-              }}
-            >
-              <option value="">Select a building</option>
-              <option value="ELHC Block">ELHC Block</option>
-            </select>
-            <select
-              className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={floor}
-              onChange={(e) => setFloor(e.target.value)}
-              disabled={!building}
-            >
-              <option value="">
-                {building ? "Select a floor" : "Select a building first"}
-              </option>
-              <option value="1st Floor">1st Floor</option>
-            </select>
-          </div>
-
-          {/* Classroom List */}
-          {!building || !floor ? (
-            <div className="flex flex-col items-center text-gray-500">
-              <FaBuilding className="text-6xl mb-4" />
-              <p className="text-lg font-medium">Select a building and floor</p>
-              <p className="text-sm">
-                Choose a building and floor to see available classrooms
+          {!selectedRoom ? (
+            <>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Classroom Keys
+              </h1>
+              <p className="text-gray-600 mb-6">
+                Select a building and floor to see available classroom keys
               </p>
-            </div>
-          ) : (
-            <div className="bg-white p-6 shadow-lg rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">
-                Available Classrooms - {building}, {floor}
-              </h2>
-              <ul className="space-y-3">
-                {classrooms.map(({ room, available }) => (
-                  <li
-                    key={room}
-                    className="p-4 flex items-center justify-between border rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <span
-                      className={`font-medium ${
-                        available ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      Room {room} -{" "}
-                      <span
-                        className={`inline-block px-2 py-1 rounded-full text-sm ${
-                          available
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
+
+              {/* Building and Floor Selection */}
+              <div className="flex space-x-4 mb-8">
+                <select
+                  className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={building}
+                  onChange={(e) => {
+                    setBuilding(e.target.value);
+                    setFloor("");
+                  }}
+                >
+                  <option value="">Select a building</option>
+                  <option value="ELHC Block">ELHC Block</option>
+                </select>
+                <select
+                  className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  disabled={!building}
+                >
+                  <option value="">
+                    {building ? "Select a floor" : "Select a building first"}
+                  </option>
+                  <option value="1st Floor">1st Floor</option>
+                </select>
+              </div>
+
+              {/* Classroom List */}
+              {!building || !floor ? (
+                <div className="flex flex-col items-center text-gray-500">
+                  <FaBuilding className="text-6xl mb-4" />
+                  <p className="text-lg font-medium">Select a building and floor</p>
+                  <p className="text-sm">
+                    Choose a building and floor to see available classrooms
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white p-6 shadow-lg rounded-lg">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Available Classrooms - {building}, {floor}
+                  </h2>
+                  <ul className="space-y-3">
+                    {classrooms.map(({ room, available }) => (
+                      <li
+                        key={room}
+                        className="p-4 flex items-center justify-between border rounded-lg hover:shadow-md transition-shadow"
                       >
-                        {available ? "Available" : "In Use"}
-                      </span>
-                    </span>
-                    {available ? (
-                      <button className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-600 transition-colors">
-                        Borrow Key <FaKey className="ml-2" />
-                      </button>
-                    ) : (
-                      <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors">
-                        Request Key <FaLock className="ml-2" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                        <span
+                          className={`font-medium ${
+                            available ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          Room {room} -{" "}
+                          <span
+                            className={`inline-block px-2 py-1 rounded-full text-sm ${
+                              available
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {available ? "Available" : "In Use"}
+                          </span>
+                        </span>
+                        {available ? (
+                          <button
+                            onClick={() => handleBorrowClick(room)}
+                            className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-600 transition-colors"
+                          >
+                            Borrow Key <FaKey className="ml-2" />
+                          </button>
+                        ) : (
+                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors">
+                            Request Key <FaLock className="ml-2" />
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            // Booking Form
+            <div className="bg-white p-6 shadow-lg rounded-lg">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">
+                Book Classroom Key
+              </h2>
+              <div className="mb-6">
+                <p className="text-lg font-medium text-gray-700">
+                  {selectedRoom.building}, {selectedRoom.floor}
+                </p>
+                <p className="text-gray-600">Room {selectedRoom.room}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start time
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="border p-2 rounded-lg w-24"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                      />
+                      <select
+                        className="border p-2 rounded-lg"
+                        value={startPeriod}
+                        onChange={(e) => setStartPeriod(e.target.value)}
+                      >
+                        <option>AM</option>
+                        <option>PM</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End time
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="border p-2 rounded-lg w-24"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                      />
+                      <select
+                        className="border p-2 rounded-lg"
+                        value={endPeriod}
+                        onChange={(e) => setEndPeriod(e.target.value)}
+                      >
+                        <option>AM</option>
+                        <option>PM</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <button
+                    onClick={handleBookNow}
+                    className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Book Now
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
