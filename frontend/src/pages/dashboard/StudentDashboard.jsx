@@ -10,8 +10,16 @@ const StudentHome = () => {
     bicycles: [{ id: 2, name: "Bicycle #15", since: "Jun 14, 10:15 PM" }],
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showProfileSidebar, setShowProfileSidebar] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Mock user data - replace with your actual user data
+  const [user] = useState({
+    name: "GEDELA VAMSI VIHARI",
+    email: "gedela_b220286cs@nitc.ac.in",
+    role: "CR"
+  });
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -44,6 +52,7 @@ const StudentHome = () => {
             <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
             {sidebarOpen && "Dashboard"}
           </button>
+          {/* Other sidebar buttons... */}
           <button
             onClick={() => navigate("/borrowkeys")}
             className={`w-full py-2 flex items-center ${
@@ -143,12 +152,29 @@ const StudentHome = () => {
               Here's what's happening with your borrowings today.
             </p>
           </div>
-          <button
-            onClick={() => navigate("/profile")}
-            className="p-2 hover:bg-gray-200 rounded-full flex items-center transition-colors"
-          >
-            <FaUser className="text-xl text-gray-700" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowProfileSidebar(!showProfileSidebar)}
+              className="p-2 hover:bg-gray-200 rounded-full flex items-center transition-colors"
+            >
+              <FaUser className="text-xl text-gray-700" />
+            </button>
+
+            {/* Profile Sidebar */}
+            {showProfileSidebar && (
+              <div className="absolute right-0 top-12 bg-white shadow-xl rounded-lg p-5 min-w-[260px] z-50 border border-gray-100">
+                <div className="flex flex-col space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
+                  <p className="text-sm text-gray-600 break-words leading-tight">{user.email}</p>
+                  <div className="flex items-center space-x-1 mt-1">
+                    <span className="text-sm px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                      {user.role}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Active Borrows Section */}
