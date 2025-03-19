@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login1 from "./pages/auth/Login1";
 import AdminDashboard from "./pages/dashboard/Admindashboard";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import StudentHome_nonCR from "./pages/dashboard/StudentDashboard_nonCR";
 import KeyManagement1 from "./pages/admin/KeyManagement1";
 import FakeDashboard from "./FakeDashboard";
 import Login from "./Login";
@@ -21,7 +22,15 @@ import BorrowBicycles from "./pages/student/Borrowbicycle";
 import Receivedrequests from "./pages/student/Receivedrequests";
 import Sentrequests from "./pages/student/Sentrequests";
 import Viewhistory from "./pages/student/Viewhistory";
-import About from "./pages/About";
+import About from "./pages/student/About_CR";
+
+
+
+import BorrowBicycle_nonCR from "./pages/student_nonCR/BorrowBicycle_nonCR";
+import ViewHistory_nonCR from "./pages/student_nonCR/Viewhistory_nonCR";
+import About_nonCR from "./pages/student_nonCR/About_nonCR";
+
+import About_admin from "./pages/admin/About_admin";
 
 
 // import UserDetails from "./UserDetails";
@@ -48,12 +57,17 @@ const App1 = () => {
         <Route path="/admin/assign-cr" element={<AssignCR/>} />
         <Route path="/admin/user-management" element={<UserManagement/>} />
         <Route path="/admin/profile" element={<Profile/>} />
+        <Route path="/admin/about" element={<About_admin/>} />
         <Route path="/borrowkeys" element={<Borrowkeys/>} />
         <Route path="/borrowbicycle" element={<BorrowBicycles/>} />
         <Route path="/receivedrequests" element={<Receivedrequests/>} />
         <Route path="/sentrequests" element={<Sentrequests/>} />
         <Route path="/viewhistory" element={<Viewhistory/>} />
         <Route path="/s-about" element={<About/>} />
+        <Route path="/dashboard/student_nonCR" element={<StudentHome_nonCR/>} />
+        <Route path="/borrowbicycle_nonCR" element={<BorrowBicycle_nonCR/>} />
+        <Route path="/viewhistory_nonCR" element={<ViewHistory_nonCR/>} />
+        <Route path="/s-about_nonCR" element={<About_nonCR/>} />
 
 
         {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}
