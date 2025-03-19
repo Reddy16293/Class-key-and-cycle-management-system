@@ -13,11 +13,11 @@ public class KeyRequest {
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
-    private User student;
+    private User student;  // The requester
 
     @ManyToOne
     @JoinColumn(name = "classroom_key_id", nullable = false)
-    private ClassroomKey classroomKey;
+    private ClassroomKey classroomKey;  // The key being requested
 
     @Column(nullable = false)
     private Timestamp requestTime;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
 import { FiClock } from "react-icons/fi";
@@ -6,14 +6,79 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const ReceivedRequests = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const requests = [
-    { id: 1, room: "Room 101", from: "Jane Smith", time: "Jun 15, 04:00 PM", status: "Pending" },
-    { id: 2, room: "Room 202", from: "Alex Johnson", time: "Jun 14, 10:15 PM", status: "Pending" },
-    { id: 3, room: "Room 305", from: "Sam Wilson", time: "Jun 13, 02:45 PM", status: "Approved" },
-  ];
+  // Fetch received requests from the API
+  useEffect(() => {
+    const fetchReceivedRequests = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/key-requests/received-requests/3");
+        if (!response.ok) {
+          throw new Error("Failed to fetch received requests");
+        }
+        const data = await response.json();
+        setRequests(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReceivedRequests();
+  }, []);
+
+  // Handle approve request
+  const handleApprove = async (requestId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/key-requests/approve/${requestId}`, {
+        method: "PUT",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to approve request");
+      }
+      // Update the request status locally
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === requestId ? { ...req, status: "APPROVED" } : req
+        )
+      );
+    } catch (error) {
+      console.error("Error approving request:", error);
+    }
+  };
+
+  // Handle decline request
+  const handleDecline = async (requestId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/key-requests/decline/${requestId}`, {
+        method: "PUT",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to decline request");
+      }
+      // Update the request status locally
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === requestId ? { ...req, status: "DECLINED" } : req
+        )
+      );
+    } catch (error) {
+      console.error("Error declining request:", error);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-screen text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -152,22 +217,30 @@ const ReceivedRequests = () => {
               className="bg-white p-6 shadow-lg rounded-lg hover:shadow-xl transition-shadow"
             >
               <h2 className="text-xl font-bold flex items-center">
-                <FaKey className="mr-2 text-blue-500" /> {req.room}
+                <FaKey className="mr-2 text-blue-500" /> {req.classroomKey.classroomName} (Block {req.classroomKey.blockName})
               </h2>
-              <p className="text-gray-700 mt-2">From: {req.from}</p>
-              <p className="text-gray-500">Requested on {req.time}</p>
+              <p className="text-gray-700 mt-2">From: {req.student.name}</p>
+              <p className="text-gray-500">Requested on {new Date(req.requestTime).toLocaleString()}</p>
               <div className="mt-4 flex justify-between items-center">
-                {req.status === "Pending" ? (
+                {req.status === "PENDING" ? (
                   <>
-                    <button className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
+                    <button
+                      onClick={() => handleDecline(req.id)}
+                      className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
                       Decline
                     </button>
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <button
+                      onClick={() => handleApprove(req.id)}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
                       Approve
                     </button>
                   </>
-                ) : (
+                ) : req.status === "APPROVED" ? (
                   <span className="text-green-600 font-bold">Approved</span>
+                ) : (
+                  <span className="text-red-600 font-bold">Declined</span>
                 )}
               </div>
             </div>

@@ -31,6 +31,17 @@ public class BorrowHistory {
 
     @Column
     private String feedback;
+    
+    private Boolean isReturned;  // Ensure this field exists
+
+    // Getters and Setters
+    public Boolean getIsReturned() {
+        return isReturned;
+    }
+
+    public void setIsReturned(Boolean isReturned) {
+        this.isReturned = isReturned;
+    }
 
     // Getters and Setters
     public Long getId() {

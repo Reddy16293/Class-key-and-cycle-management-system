@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.ClassroomKey;
+import com.example.demo.model.KeyRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,9 @@ public interface ClassroomKeyRepository extends JpaRepository<ClassroomKey, Long
 	 boolean existsByBlockNameAndClassroomName(String blockName, String classroomName);
 	 @Query("SELECT c FROM ClassroomKey c WHERE LOWER(TRIM(c.blockName)) = LOWER(TRIM(:blockName)) AND LOWER(TRIM(c.classroomName)) = LOWER(TRIM(:classroomName))")
 	 Optional<ClassroomKey> findByBlockNameAndClassroomName(@Param("blockName") String blockName, @Param("classroomName") String classroomName);
-
+    
+	  List<ClassroomKey> findByBlockNameAndFloorAndIsAvailable(String blockName, String floor, int isAvailable);
+	  List<ClassroomKey> findByBlockNameAndFloor(String blockName, String floor);
+	  Optional<ClassroomKey> findById(Long id);
 	 
 }

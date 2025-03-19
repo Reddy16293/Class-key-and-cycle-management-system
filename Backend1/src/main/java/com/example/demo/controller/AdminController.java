@@ -127,6 +127,15 @@ public class AdminController {
  
  @PostMapping("/addclassrooms")
  public ResponseEntity<String> addClassroom(@RequestBody ClassroomKey classroomKey) {
+     // Extract floor from the first letter of classroomName
+     String classroomName = classroomKey.getClassroomName();
+     if (classroomName == null || classroomName.isEmpty()) {
+         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Classroom name cannot be empty");
+     }
+
+     String floor = String.valueOf(classroomName.charAt(0)); // First letter as floor
+     classroomKey.setFloor(floor); // Set the extracted floor
+
      Optional<ClassroomKey> existingKey = classroomKeyRepository.findByBlockNameAndClassroomName(
          classroomKey.getBlockName(), classroomKey.getClassroomName()
      );

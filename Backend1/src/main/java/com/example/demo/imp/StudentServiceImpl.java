@@ -155,5 +155,27 @@ public class StudentServiceImpl implements StudentService {
     public List<Bicycle> listAllBicycles() {
         return bicycleRepository.findAll();
     }
+    
+    
+
+    public List<ClassroomKey> getAvailableRooms(String blockName, String floor) {
+        return classroomKeyRepository.findByBlockNameAndFloorAndIsAvailable(blockName, floor, 1);
+    }
+
+    public String bookClassroomKey(String blockName, String classroomName, Long userId) {
+        Optional<ClassroomKey> keyOptional = classroomKeyRepository.findByBlockNameAndClassroomName(blockName, classroomName);
+        if (keyOptional.isEmpty()) {
+            return "Invalid block or classroom name";
+        }
+
+        ClassroomKey key = keyOptional.get();
+        if (key.getIsAvailable() == 0) {
+            return "Key is already borrowed";
+        }
+
+        key.setIsAvailable(0);
+        classroomKeyRepository.save(key);
+        return "Key successfully booked";
+    }
 
 }

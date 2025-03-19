@@ -23,9 +23,9 @@ public class AuthController {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserRepository userRepository;
     
-    public AuthController(OAuth2AuthorizedClientService authorizedClientService) {
+    public AuthController(OAuth2AuthorizedClientService authorizedClientService, UserRepository userRepository) {
         this.authorizedClientService = authorizedClientService;
-		this.userRepository = null;
+		this.userRepository= userRepository;
     }
     @GetMapping("/user")
     public User getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {

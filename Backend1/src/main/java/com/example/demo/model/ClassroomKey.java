@@ -18,6 +18,9 @@ public class ClassroomKey {
 
     @Column(nullable = false)
     private int isAvailable;
+   
+    @Column(name = "floor")
+    private String floor;
 
   
 
@@ -53,4 +56,12 @@ public class ClassroomKey {
     public void setIsAvailable(int isAvailable) {
         this.isAvailable = isAvailable;
     }
+    public void setFloor(String floor) {
+        this.floor = floor;
+    }
+
+    public String getFloor() {
+        return floor;
+    }
+    
 }

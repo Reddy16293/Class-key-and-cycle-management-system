@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FaKey,
   FaBicycle,
@@ -23,21 +24,69 @@ const BorrowKeys = () => {
   const [startPeriod, setStartPeriod] = useState("PM");
   const [endTime, setEndTime] = useState("5.00");
   const [endPeriod, setEndPeriod] = useState("PM");
+  const [classrooms, setClassrooms] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Mock data for room availability
-  const classrooms = [
-    { room: "101", available: true },
-    { room: "102", available: false },
-    { room: "103", available: true },
-  ];
+  // Fetch current user's ID on component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true,
+        });
+        setCurrentUserId(response.data.id);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
-  const handleBorrowClick = (roomNumber) => {
+  // Process block name and floor
+  const processBlockName = (blockName) => {
+    return blockName.replace(" Block", "").trim();
+  };
+
+  const processFloor = (floor) => {
+    return floor.replace(/\D/g, "");
+  };
+
+  // Fetch available rooms based on building and floor
+  const fetchAvailableRooms = async (blockName, floor) => {
+    try {
+      const processedBlockName = processBlockName(blockName);
+      const processedFloor = processFloor(floor);
+
+      const response = await axios.get(
+        `http://localhost:8080/api/student/all-keys/${processedBlockName}/${processedFloor}`,
+        { headers: { "Accept": "application/json" } }
+      );
+
+      if (Array.isArray(response.data)) {
+        setClassrooms(response.data);
+      } else {
+        throw new Error("Invalid response format: Expected an array");
+      }
+    } catch (error) {
+      console.error("Error fetching available rooms:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (building && floor) {
+      fetchAvailableRooms(building, floor);
+    }
+  }, [building, floor]);
+
+  // Handle borrowing a classroom key
+  const handleBorrowClick = (room) => {
     setSelectedRoom({
       building,
       floor,
-      room: roomNumber
+      room: room.classroomName,
+      keyId: room.id,
     });
   };
 
@@ -45,14 +94,75 @@ const BorrowKeys = () => {
     setSelectedRoom(null);
   };
 
-  const handleBookNow = () => {
-    // Add your booking logic here
-    console.log("Booking details:", {
-      ...selectedRoom,
-      startTime: `${startTime} ${startPeriod}`,
-      endTime: `${endTime} ${endPeriod}`
-    });
-    handleCancel();
+  const handleBookNow = async () => {
+    if (!selectedRoom) return;
+
+    try {
+      const response = await axios.post(
+        `http://localhost:8080/api/student/book-classroom-key/${selectedRoom.keyId}`,
+        null,
+        {
+          params: {
+            userId: currentUserId,
+          },
+          withCredentials: true,
+        }
+      );
+
+      alert(response.data);
+      fetchAvailableRooms(building, floor);
+      setSelectedRoom(null);
+    } catch (error) {
+      console.error("Error booking key:", error);
+      alert("Failed to book the key. Please try again.");
+    }
+  };
+
+  // Request access to a key booked by another student
+  const handleRequestAccess = async (keyId) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/key-requests/request",
+        null,
+        {
+          params: {
+            studentId: currentUserId,
+            classroomKeyId: keyId,
+          },
+          withCredentials: true,
+        }
+      );
+
+      alert(response.data);
+      fetchAvailableRooms(building, floor);
+    } catch (error) {
+      console.error("Error requesting access:", error);
+      alert("Failed to request access. Please try again.");
+    }
+  };
+
+  // Fetch key request details
+  const fetchKeyRequestDetails = async (classroomKeyId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/key-requests/request-details/${classroomKeyId}`
+      );
+
+      if (response.data === "Key is available") {
+        alert("Key is available for booking.");
+      } else {
+        const keyRequest = response.data;
+
+        if (keyRequest.student.id === currentUserId) {
+          alert("You already booked this key.");
+        } else {
+          alert(`Key is currently booked by ${keyRequest.student.name}.`);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching key request details:", error);
+      alert("Failed to fetch key request details.");
+    }
   };
 
   return (
@@ -204,6 +314,9 @@ const BorrowKeys = () => {
                 >
                   <option value="">Select a building</option>
                   <option value="ELHC Block">ELHC Block</option>
+                  <option value="A Block">A Block</option>
+                  <option value="B Block">B Block</option>
+                  <option value="C Block">C Block</option>
                 </select>
                 <select
                   className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -215,6 +328,9 @@ const BorrowKeys = () => {
                     {building ? "Select a floor" : "Select a building first"}
                   </option>
                   <option value="1st Floor">1st Floor</option>
+                  <option value="2nd Floor">2nd Floor</option>
+                  <option value="3rd Floor">3rd Floor</option>
+                  <option value="4th Floor">4th Floor</option>
                 </select>
               </div>
 
@@ -233,28 +349,28 @@ const BorrowKeys = () => {
                     Available Classrooms - {building}, {floor}
                   </h2>
                   <ul className="space-y-3">
-                    {classrooms.map(({ room, available }) => (
+                    {classrooms.map((room) => (
                       <li
-                        key={room}
+                        key={room.id}
                         className="p-4 flex items-center justify-between border rounded-lg hover:shadow-md transition-shadow"
                       >
                         <span
                           className={`font-medium ${
-                            available ? "text-green-600" : "text-red-600"
+                            room.isAvailable === 1 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          Room {room} -{" "}
+                          Room {room.classroomName} -{" "}
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-sm ${
-                              available
+                              room.isAvailable === 1
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
                             }`}
                           >
-                            {available ? "Available" : "In Use"}
+                            {room.isAvailable === 1 ? "Available" : "In Use"}
                           </span>
                         </span>
-                        {available ? (
+                        {room.isAvailable === 1 ? (
                           <button
                             onClick={() => handleBorrowClick(room)}
                             className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-600 transition-colors"
@@ -262,7 +378,10 @@ const BorrowKeys = () => {
                             Borrow Key <FaKey className="ml-2" />
                           </button>
                         ) : (
-                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors">
+                          <button
+                            onClick={() => fetchKeyRequestDetails(room.id)}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors"
+                          >
                             Request Key <FaLock className="ml-2" />
                           </button>
                         )}
