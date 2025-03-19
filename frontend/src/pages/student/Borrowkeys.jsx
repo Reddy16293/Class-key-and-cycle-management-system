@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // Import Axios
+import axios from "axios";
 import {
   FaKey,
   FaBicycle,
@@ -25,56 +25,52 @@ const BorrowKeys = () => {
   const [endTime, setEndTime] = useState("5.00");
   const [endPeriod, setEndPeriod] = useState("PM");
   const [classrooms, setClassrooms] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Fetch current user's ID on component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true,
+        });
+        setCurrentUserId(response.data.id);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
   // Process block name and floor
   const processBlockName = (blockName) => {
-    return blockName.replace(" Block", "").trim(); // Remove "Block" and trim whitespace
+    return blockName.replace(" Block", "").trim();
   };
 
   const processFloor = (floor) => {
-    return floor.replace(/\D/g, ""); // Remove non-numeric characters
+    return floor.replace(/\D/g, "");
   };
 
   // Fetch available rooms based on building and floor
   const fetchAvailableRooms = async (blockName, floor) => {
     try {
-      // Process block name and floor
       const processedBlockName = processBlockName(blockName);
       const processedFloor = processFloor(floor);
 
-      console.log(`Fetching rooms for: Block = ${processedBlockName}, Floor = ${processedFloor}`);
-
-      // Make API call using Axios
       const response = await axios.get(
-        `http://localhost:8080/api/student/available-rooms/${processedBlockName}/${processedFloor}`,
-        { headers: { "Accept": "application/json" } }  // Ensure JSON response
+        `http://localhost:8080/api/student/all-keys/${processedBlockName}/${processedFloor}`,
+        { headers: { "Accept": "application/json" } }
       );
 
-      // Log full response for debugging
-      console.log("Full API Response:", response);
-      console.log("API Response Data:", response.data);
-
-      // Ensure response is an array before setting state
       if (Array.isArray(response.data)) {
-        console.log("✅ Valid array received:", response.data);
         setClassrooms(response.data);
       } else {
-        console.error("❌ Invalid response format. Expected an array but got:", response.data);
         throw new Error("Invalid response format: Expected an array");
       }
     } catch (error) {
-      console.error("❌ Error fetching available rooms:", error);
-
-      // Handle specific Axios errors
-      if (error.response) {
-        console.error("❌ Server responded with:", error.response.status, error.response.data);
-      } else if (error.request) {
-        console.error("❌ No response received from server.");
-      } else {
-        console.error("❌ Error setting up the request:", error.message);
-      }
+      console.error("Error fetching available rooms:", error);
     }
   };
 
@@ -100,49 +96,72 @@ const BorrowKeys = () => {
 
   const handleBookNow = async () => {
     if (!selectedRoom) return;
-  
+
     try {
-      // Step 1: Fetch the current user's information
-      const userResponse = await axios.get("http://localhost:8080/api/user", {
-        withCredentials: true, // Include cookies for authentication
-      });
-  
-      const user = userResponse.data;
-      if (!user || !user.id) {
-        alert("You are not authenticated. Please log in.");
-        return;
-      }
-  
-      const userId = user.id; // Get the userId from the response
-  
-      console.log("Booking key with:", {
-        keyId: selectedRoom.keyId,
-        userId: userId,
-      });
-  
-      // Step 2: Book the classroom key using the userId
-      const bookingResponse = await axios.post(
+      const response = await axios.post(
         `http://localhost:8080/api/student/book-classroom-key/${selectedRoom.keyId}`,
-        null, // No request body needed
+        null,
         {
           params: {
-            userId: userId, // Use the fetched userId
+            userId: currentUserId,
           },
-          withCredentials: true, // Include cookies for authentication
+          withCredentials: true,
         }
       );
-  
-      console.log("Booking response:", bookingResponse);
-      alert(bookingResponse.data); // Show success message
-      // Refresh available rooms after booking
+
+      alert(response.data);
       fetchAvailableRooms(building, floor);
-      setSelectedRoom(null); // Close the booking form
+      setSelectedRoom(null);
     } catch (error) {
       console.error("Error booking key:", error);
-      if (error.response) {
-        console.error("Server responded with:", error.response.status, error.response.data);
-      }
       alert("Failed to book the key. Please try again.");
+    }
+  };
+
+  // Request access to a key booked by another student
+  const handleRequestAccess = async (keyId) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/key-requests/request",
+        null,
+        {
+          params: {
+            studentId: currentUserId,
+            classroomKeyId: keyId,
+          },
+          withCredentials: true,
+        }
+      );
+
+      alert(response.data);
+      fetchAvailableRooms(building, floor);
+    } catch (error) {
+      console.error("Error requesting access:", error);
+      alert("Failed to request access. Please try again.");
+    }
+  };
+
+  // Fetch key request details
+  const fetchKeyRequestDetails = async (classroomKeyId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/key-requests/request-details/${classroomKeyId}`
+      );
+
+      if (response.data === "Key is available") {
+        alert("Key is available for booking.");
+      } else {
+        const keyRequest = response.data;
+
+        if (keyRequest.student.id === currentUserId) {
+          alert("You already booked this key.");
+        } else {
+          alert(`Key is currently booked by ${keyRequest.student.name}.`);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching key request details:", error);
+      alert("Failed to fetch key request details.");
     }
   };
 
@@ -359,7 +378,10 @@ const BorrowKeys = () => {
                             Borrow Key <FaKey className="ml-2" />
                           </button>
                         ) : (
-                          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors">
+                          <button
+                            onClick={() => fetchKeyRequestDetails(room.id)}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors"
+                          >
                             Request Key <FaLock className="ml-2" />
                           </button>
                         )}

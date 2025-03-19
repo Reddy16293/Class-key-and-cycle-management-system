@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import axios from "axios";
 import {
   FaKey,
   FaBicycle,
@@ -20,22 +21,77 @@ const ViewHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("keys");
   const [filterOption, setFilterOption] = useState("all"); // "all" or "date"
+  const [statusFilter, setStatusFilter] = useState("all"); // "all", "returned", "not_returned"
   const [selectedDate, setSelectedDate] = useState(null);
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const keysHistory = [
-    { room: "Room 101", borrowed: "Jun 10, 03:00 PM", returned: "Jun 10, 08:15 PM", duration: "5h 15m" },
-    { room: "Room 203", borrowed: "Jun 8, 06:45 PM", returned: "Jun 8, 09:00 PM", duration: "2h 15m" },
-    { room: "Room 105", borrowed: "Jun 5, 03:30 PM", returned: "Jun 5, 05:15 PM", duration: "1h 45m" },
-  ];
+  // Fetch the current user's ID
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/user", {
+        withCredentials: true,
+      });
+      return response.data?.id; // Return the user ID
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      return null;
+    }
+  };
 
-  const bicyclesHistory = [
-    { room: "Bicycle 1", borrowed: "Jun 9, 10:00 AM", returned: "Jun 9, 12:30 PM", duration: "2h 30m" },
-    { room: "Bicycle 2", borrowed: "Jun 7, 02:00 PM", returned: "Jun 7, 04:15 PM", duration: "2h 15m" },
-  ];
+  // Fetch borrowing history for the current user
+  const fetchBorrowingHistory = async (userId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/history/user/${userId}`,
+        { withCredentials: true }
+      );
+      return response.data; // Return the history data
+    } catch (error) {
+      console.error("Error fetching borrowing history:", error);
+      throw error;
+    }
+  };
 
-  const historyData = activeTab === "keys" ? keysHistory : bicyclesHistory;
+  // Load history data when the component mounts
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const userId = await fetchCurrentUser();
+        if (!userId) {
+          setError("User not authenticated. Please log in.");
+          return;
+        }
+
+        const history = await fetchBorrowingHistory(userId);
+        setHistoryData(history);
+      } catch (error) {
+        setError("Failed to load history data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Format the time to a readable format
+  const formatTime = (time) => {
+    if (!time) return "Not Returned";
+    const date = new Date(time);
+    return date.toLocaleString(); // Format as "3/19/2025, 7:02:55 PM"
+  };
+
+  // Filter history data based on status
+  const filteredHistory = historyData.filter((entry) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "returned") return entry.returnTime !== null;
+    if (statusFilter === "not_returned") return entry.returnTime === null;
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -148,18 +204,18 @@ const ViewHistory = () => {
           </button>
         </nav>
         <button
-            onClick={() => navigate("/")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sign Out"}
-          </button>
+          onClick={() => navigate("/")}
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === "/"
+              ? "bg-blue-500 text-white"
+              : "text-white hover:bg-blue-500"
+          } rounded-lg transition-all`}
+        >
+          <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
+          {sidebarOpen && "Sign Out"}
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -189,6 +245,19 @@ const ViewHistory = () => {
             >
               <option value="all">All Time</option>
               <option value="date">Select Date</option>
+            </select>
+          </div>
+
+          {/* Dropdown for Status Filter */}
+          <div className="relative">
+            <select
+              className="border rounded-lg px-3 py-2 cursor-pointer bg-white shadow-sm focus:outline-none"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="returned">Returned</option>
+              <option value="not_returned">Not Returned</option>
             </select>
           </div>
 
@@ -235,26 +304,32 @@ const ViewHistory = () => {
 
         {/* History List */}
         <div className="mt-4">
-          {historyData.map((entry, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between border-b py-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                {activeTab === "keys" ? (
+          {loading ? (
+            <p>Loading history...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : filteredHistory.length === 0 ? (
+            <p>No history found.</p>
+          ) : (
+            filteredHistory.map((entry, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between border-b py-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
                   <FaKey className="text-blue-500 text-lg" />
-                ) : (
-                  <FaBicycle className="text-green-500 text-lg" />
-                )}
-                <div>
-                  <h3 className="font-semibold">{entry.room}</h3>
-                  <p className="text-gray-500">Borrowed: {entry.borrowed}</p>
-                  <p className="text-gray-500">Returned: {entry.returned}</p>
+                  <div>
+                    <h3 className="font-semibold">
+                      Room {entry.classroomKey.classroomName} - {entry.classroomKey.blockName}
+                    </h3>
+                    <p className="text-gray-500">
+                      Booked from {formatTime(entry.borrowTime)} to {formatTime(entry.returnTime)}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <span className="text-gray-700 font-semibold">{entry.duration}</span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
