@@ -34,3 +34,24 @@ public class UserController {
         
         return ResponseEntity.ok("Admin registered successfully.");
     }
+
+        @PostMapping("/login3")
+    public ResponseEntity<String> login(@RequestBody Fake admin) {
+        Optional<Fake> userOptional = userRepository.findByEmail(admin.getEmail());
+
+        if (userOptional.isPresent()) {
+            Fake user = userOptional.get();
+
+            if (!"ADMIN".equals(user.getRole())) {
+                return ResponseEntity.badRequest().body("Only admins can log in using this endpoint.");
+            }
+
+            if (passwordEncoder.matches(admin.getPassword(), user.getPassword())) {
+                return ResponseEntity.ok("Login successful.");
+            }
+        }
+
+        return ResponseEntity.status(401).body("Invalid credentials.");
+    }
+}
+
