@@ -32,5 +32,7 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
 
     // Find if the key is currently borrowed by anyone
     Optional<BorrowHistory> findByClassroomKeyAndIsReturned(ClassroomKey classroomKey, boolean isReturned);
+    
+    List<BorrowHistory> findByStudentIdAndIsReturnedFalse(Long studentId);
 }
 

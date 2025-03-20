@@ -105,6 +105,48 @@ public class KeyRequestController {
         return ResponseEntity.ok(receivedRequests);
     }
     
+    
+    @GetMapping("/sent-requests/{userId}")
+    public ResponseEntity<?> getSentKeyRequests(@PathVariable Long userId) {
+        // Fetch the user who sent the requests
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+        User user = userOptional.get();
+
+        // Fetch all key requests sent by this user
+        List<KeyRequest> sentRequests = keyRequestRepository.findByStudent(user);
+
+        if (sentRequests.isEmpty()) {
+            return ResponseEntity.ok("No key requests sent.");
+        }
+
+        return ResponseEntity.ok(sentRequests);
+    }
+    
+    @PutMapping("/cancel/{requestId}")
+    public ResponseEntity<?> cancelKeyRequest(@PathVariable Long requestId) {
+        // Fetch the key request by ID
+        Optional<KeyRequest> keyRequestOptional = keyRequestRepository.findById(requestId);
+        if (keyRequestOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("Key request not found");
+        }
+
+        KeyRequest keyRequest = keyRequestOptional.get();
+
+        // Check if the request is already approved or declined
+        if (!keyRequest.getStatus().equals("PENDING")) {
+            return ResponseEntity.badRequest().body("Request is already processed and cannot be canceled");
+        }
+
+        // Update the status to CANCELED
+        keyRequest.setStatus("CANCELED");
+        keyRequestRepository.save(keyRequest);
+
+        return ResponseEntity.ok("Key request canceled successfully");
+    }
+    
     @PutMapping("/approve/{requestId}")
     public ResponseEntity<?> approveKeyRequest(@PathVariable Long requestId) {
         // Fetch the key request by ID

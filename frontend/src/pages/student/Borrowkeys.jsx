@@ -126,7 +126,7 @@ const BorrowKeys = () => {
         null,
         {
           params: {
-            studentId: currentUserId,
+            studentId: currentUserId, // Use the current user's ID dynamically
             classroomKeyId: keyId,
           },
           withCredentials: true,
@@ -134,7 +134,7 @@ const BorrowKeys = () => {
       );
 
       alert(response.data);
-      fetchAvailableRooms(building, floor);
+      fetchAvailableRooms(building, floor); // Refresh the list of available rooms
     } catch (error) {
       console.error("Error requesting access:", error);
       alert("Failed to request access. Please try again.");
@@ -379,7 +379,7 @@ const BorrowKeys = () => {
                           </button>
                         ) : (
                           <button
-                            onClick={() => fetchKeyRequestDetails(room.id)}
+                            onClick={() => handleRequestAccess(room.id)} // Call handleRequestAccess with the key ID
                             className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors"
                           >
                             Request Key <FaLock className="ml-2" />

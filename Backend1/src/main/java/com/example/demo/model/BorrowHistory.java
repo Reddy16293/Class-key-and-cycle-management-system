@@ -32,7 +32,8 @@ public class BorrowHistory {
     @Column
     private String feedback;
     
-    private Boolean isReturned;  // Ensure this field exists
+    @Column(nullable = false)
+    private Boolean isReturned = false;  // Default value set to false
 
     // Getters and Setters
     public Boolean getIsReturned() {

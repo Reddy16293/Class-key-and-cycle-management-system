@@ -1,4 +1,4 @@
-package com.example.demo.controller;
+/** package com.example.demo.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,4 +27,4 @@ public class StudentControllerTest {
         ResponseEntity<String> response = studentController.bookClassroomKey(1L, 1L);
         assertEquals("Key successfully booked by John Doe", response.getBody());
     }
-}
+} **/

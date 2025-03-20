@@ -1,25 +1,143 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome, FaUser } from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
 import { IoMenu } from "react-icons/io5";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const StudentHome = () => {
   const [activeBorrows, setActiveBorrows] = useState({
-    keys: [{ id: 1, name: "Room 101", since: "Jun 15, 04:00 PM" }],
-    bicycles: [{ id: 2, name: "Bicycle #15", since: "Jun 14, 10:15 PM" }],
+    keys: [],
+    bicycles: [],
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfileSidebar, setShowProfileSidebar] = useState(false);
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    role: "",
+    id: null,
+  });
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Mock user data - replace with your actual user data
-  const [user] = useState({
-    name: "GEDELA VAMSI VIHARI",
-    email: "gedela_b220286cs@nitc.ac.in",
-    role: "CR"
-  });
+  // Fetch current user data from the API
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true, // Include credentials for authentication
+        });
+        const userData = response.data;
+        if (userData) {
+          setUser({
+            name: userData.name || "Unknown",
+            email: userData.email || "No email",
+            role: userData.role || "No role",
+            id: userData.id || null,
+          });
+        } else {
+          setError("No user data returned from the API");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError("Failed to fetch user data. Please try again later.");
+      } finally {
+        setLoading(false); // Stop loading
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch active borrowings for the user
+  useEffect(() => {
+    const fetchActiveBorrowings = async () => {
+      if (!user.id) return; // Wait until user ID is available
+  
+      try {
+        const response = await axios.get(`http://localhost:8080/api/history/user/${user.id}/active-borrowings`, {
+          withCredentials: true, // Include credentials for authentication
+        });
+        const activeBorrowings = response.data;
+  
+        // Separate keys and bicycles
+        const keys = activeBorrowings
+          .filter((item) => item.classroomKey) // Ensure classroomKey exists
+          .map((item) => ({
+            id: item.id,
+            name: item.classroomKey.classroomName, // Use classroomName instead of name
+            blockName: item.classroomKey.blockName, // Use blockName
+            classroomNumber: item.classroomKey.classroomName, // Use classroomName as classroomNumber
+            since: new Date(item.borrowTime).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+  
+        const bicycles = activeBorrowings
+          .filter((item) => item.bicycle) // Ensure bicycle exists
+          .map((item) => ({
+            id: item.id,
+            name: item.bicycle.name,
+            since: new Date(item.borrowTime).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+  
+        setActiveBorrows({ keys, bicycles });
+      } catch (error) {
+        console.error("Error fetching active borrowings:", error);
+        setError("Failed to fetch active borrowings. Please try again later.");
+      }
+    };
+  
+    fetchActiveBorrowings();
+  }, [user.id]);
+  // Handle returning an item
+  const handleReturn = async (borrowId) => {
+    try {
+      const response = await axios.post(`http://localhost:8080/api/history/return/${borrowId}`, null, {
+        withCredentials: true, // Include credentials for authentication
+      });
+      if (response.status === 200) {
+        // Remove the returned item from active borrowings
+        setActiveBorrows((prev) => ({
+          keys: prev.keys.filter((key) => key.id !== borrowId),
+          bicycles: prev.bicycles.filter((bicycle) => bicycle.id !== borrowId),
+        }));
+        alert("Item returned successfully");
+      }
+    } catch (error) {
+      console.error("Error returning item:", error);
+      alert("Failed to return item. Please try again.");
+    }
+  };
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -52,7 +170,6 @@ const StudentHome = () => {
             <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
             {sidebarOpen && "Dashboard"}
           </button>
-          {/* Other sidebar buttons... */}
           <button
             onClick={() => navigate("/borrowkeys")}
             className={`w-full py-2 flex items-center ${
@@ -133,18 +250,18 @@ const StudentHome = () => {
           </button>
         </nav>
         <button
-            onClick={() => navigate("/")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sign Out"}
-          </button>
+          onClick={() => navigate("/")}
+          className={`w-full py-2 flex items-center ${
+            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
+          } ${
+            location.pathname === "/"
+              ? "bg-blue-500 text-white"
+              : "text-white hover:bg-blue-500"
+          } rounded-lg transition-all`}
+        >
+          <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
+          {sidebarOpen && "Sign Out"}
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -152,7 +269,7 @@ const StudentHome = () => {
         {/* Header with Profile Button */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome Back, Student</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Welcome Back, {user.name}</h1>
             <p className="text-gray-600 mt-1">
               Here's what's happening with your borrowings today.
             </p>
@@ -182,45 +299,64 @@ const StudentHome = () => {
           </div>
         </div>
 
-        {/* Active Borrows Section */}
-        {(activeBorrows.keys.length > 0 || activeBorrows.bicycles.length > 0) && (
-          <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800">Active Borrows</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Currently borrowed keys and bicycles
-            </p>
-            <div className="mt-4 space-y-3">
-              {activeBorrows.keys.map((key) => (
-                <div
-                  key={key.id}
-                  className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow"
-                >
-                  <span className="text-gray-700">
-                    {key.name}{" "}
-                    <span className="text-sm text-gray-500">(Since {key.since})</span>
-                  </span>
-                  <button className="text-blue-500 hover:text-blue-600 transition-colors">
-                    Submit
-                  </button>
-                </div>
-              ))}
-              {activeBorrows.bicycles.map((bicycle) => (
-                <div
-                  key={bicycle.id}
-                  className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow"
-                >
-                  <span className="text-gray-700">
-                    {bicycle.name}{" "}
-                    <span className="text-sm text-gray-500">(Since {bicycle.since})</span>
-                  </span>
-                  <button className="text-blue-500 hover:text-blue-600 transition-colors">
-                    Submit
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {/* Active Borrows Section */}
+                  {/* Active Borrows Section */}
+            {/* Active Borrows Section */}
+{(activeBorrows.keys.length > 0 || activeBorrows.bicycles.length > 0) && (
+  <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
+    <h2 className="text-xl font-semibold text-gray-800">Active Borrows</h2>
+    <p className="text-sm text-gray-500 mt-1">
+      Currently borrowed keys and bicycles
+    </p>
+    <div className="mt-4 space-y-3">
+      {activeBorrows.keys.map((key) => (
+        <div
+          key={key.id}
+          className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow"
+        >
+          <div className="flex flex-col">
+            <span className="text-gray-700 font-medium">
+              {key.name} {/* Classroom Name */}
+            </span>
+            <span className="text-sm text-gray-500">
+              Block: {key.blockName}, Room: {key.classroomNumber} {/* Block and Room Details */}
+            </span>
+            <span className="text-sm text-gray-500">
+              Since {key.since} {/* Borrow Time */}
+            </span>
           </div>
-        )}
+          <button
+            onClick={() => handleReturn(key.id)}
+            className="text-blue-500 hover:text-blue-600 transition-colors"
+          >
+            Return
+          </button>
+        </div>
+      ))}
+      {activeBorrows.bicycles.map((bicycle) => (
+        <div
+          key={bicycle.id}
+          className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow"
+        >
+          <div className="flex flex-col">
+            <span className="text-gray-700 font-medium">
+              {bicycle.name} {/* Bicycle Name */}
+            </span>
+            <span className="text-sm text-gray-500">
+              Since {bicycle.since} {/* Borrow Time */}
+            </span>
+          </div>
+          <button
+            onClick={() => handleReturn(bicycle.id)}
+            className="text-blue-500 hover:text-blue-600 transition-colors"
+          >
+            Return
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -244,7 +380,7 @@ const StudentHome = () => {
               Scan QR code to borrow campus bicycles
             </p>
             <button
-              onClick={() => navigate("/borrowbicycle")}
+              onClick={() => navigate("/borrowbicycle_nonCR")}
               className="mt-4 bg-white text-green-600 px-6 py-2 rounded-full hover:bg-green-50 transition-colors"
             >
               Borrow Bicycles
