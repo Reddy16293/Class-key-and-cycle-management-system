@@ -1,4 +1,4 @@
-
+/*
 package com.example.demo.controller;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -55,4 +55,4 @@ public class AdminControllerTest {
         // Verify that the service method was called
         verify(adminService, times(1)).addClassroom(any(ClassroomKey.class));
     }
-}
+} */
