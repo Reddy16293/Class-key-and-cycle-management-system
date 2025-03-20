@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,22 @@ public class StudentController {
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
     }
+    
+    
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
+        // Fetch the user by ID from the repository
+        Optional<User> userOptional = userRepository.findById(userId);
 
+        if (userOptional.isPresent()) {
+            // If the user is found, return the user details
+            User user = userOptional.get();
+            return ResponseEntity.ok(user);
+        } else {
+            // If the user is not found, return a 404 Not Found response
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id: " + userId);
+        }
+    }
    
 
     
@@ -157,4 +173,7 @@ public class StudentController {
         List<Bicycle> bicycles = studentService.listAllBicycles();
         return ResponseEntity.ok(bicycles);
     }
+    
+    
+    
 }

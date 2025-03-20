@@ -22,4 +22,8 @@ public interface KeyRequestRepository extends JpaRepository<KeyRequest, Long> {
 	    List<KeyRequest> findKeysCurrentlyHeldByUser(@Param("user") User user);
 	 
 	 Optional<KeyRequest> findById(Long id);
+	 List<KeyRequest> findByStudent(User student);
+	 
+	 
+	 
 }
