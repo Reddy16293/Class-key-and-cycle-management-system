@@ -1,250 +1,230 @@
-import { useState, useEffect } from "react";
-import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
-import { IoMenu } from "react-icons/io5";
-import { FiClock } from "react-icons/fi";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import StudentSidebar from "./StudentSidebar";
+import { FaKey, FaClock, FaTimes, FaCheck } from "react-icons/fa";
 
 const ReceivedRequests = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Fetch received requests from the API
+  // Fetch current user data
   useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true
+        });
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        setError("Failed to load user data");
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch received requests when currentUser is available
+  useEffect(() => {
+    if (!currentUser) return;
+
     const fetchReceivedRequests = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/key-requests/received-requests/3");
-        if (!response.ok) {
-          throw new Error("Failed to fetch received requests");
-        }
-        const data = await response.json();
-        setRequests(data);
+        const response = await axios.get(
+          `http://localhost:8080/api/key-requests/received-requests/${currentUser.id}`,
+          { withCredentials: true }
+        );
+        setRequests(response.data);
       } catch (error) {
-        setError(error.message);
+        setError(error.response?.data?.message || "Failed to fetch requests");
       } finally {
         setLoading(false);
       }
     };
 
     fetchReceivedRequests();
-  }, []);
+  }, [currentUser]);
 
-  // Handle approve request
   const handleApprove = async (requestId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/key-requests/approve/${requestId}`, {
-        method: "PUT",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to approve request");
-      }
-      // Update the request status locally
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
+      await axios.put(
+        `http://localhost:8080/api/key-requests/approve/${requestId}`,
+        null,
+        { withCredentials: true }
+      );
+      
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
           req.id === requestId ? { ...req, status: "APPROVED" } : req
         )
       );
     } catch (error) {
       console.error("Error approving request:", error);
+      alert(error.response?.data?.message || "Failed to approve request");
     }
   };
 
-  // Handle decline request
   const handleDecline = async (requestId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/key-requests/decline/${requestId}`, {
-        method: "PUT",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to decline request");
-      }
-      // Update the request status locally
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
+      await axios.put(
+        `http://localhost:8080/api/key-requests/decline/${requestId}`,
+        null,
+        { withCredentials: true }
+      );
+      
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
           req.id === requestId ? { ...req, status: "DECLINED" } : req
         )
       );
     } catch (error) {
       console.error("Error declining request:", error);
+      alert(error.response?.data?.message || "Failed to decline request");
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <StudentSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          user={currentUser} 
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">Error: {error}</div>;
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <StudentSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          user={currentUser} 
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md">
+            <h3 className="text-lg font-medium text-red-500 mb-2">Error</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Sidebar */}
-      <aside
-        className={`bg-gradient-to-b from-blue-600 to-blue-700 shadow-lg flex flex-col p-4 ${
-          sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300`}
-      >
-        <button
-          className="mb-4 p-2 text-white hover:bg-blue-500 rounded-full transition-colors"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <IoMenu className="text-xl" />
-        </button>
-        {sidebarOpen && (
-          <h2 className="text-xl font-bold mb-6 text-white">Student Portal</h2>
-        )}
-        <nav className="flex-1 space-y-2">
-          <button
-            onClick={() => navigate("/dashboard/student")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/dashboard/student"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Dashboard"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowkeys")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowkeys"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaKey className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Keys"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowbicycle")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowbicycle"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaBicycle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Bicycles"}
-          </button>
-          <button
-            onClick={() => navigate("/receivedrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/receivedrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaEnvelope className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Received Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/sentrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/sentrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FiClock className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sent Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/viewhistory")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/viewhistory"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHistory className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "View History"}
-          </button>
-          <button
-            onClick={() => navigate("/s-about")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/s-about"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "About"}
-          </button>
-        </nav>
-        <button
-            onClick={() => navigate("/")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sign Out"}
-          </button>
-      </aside>
+    <div className="flex h-screen bg-gray-50">
+      <StudentSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        user={currentUser} 
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Received Requests</h1>
-        <p className="text-gray-600 mb-6">Manage your received key requests</p>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-800">Received Requests</h1>
+            <p className="text-gray-600">All requests for keys you hold/have held</p>
+          </div>
 
-        <div className="space-y-4">
-          {requests.map((req) => (
-            <div
-              key={req.id}
-              className="bg-white p-6 shadow-lg rounded-lg hover:shadow-xl transition-shadow"
-            >
-              <h2 className="text-xl font-bold flex items-center">
-                <FaKey className="mr-2 text-blue-500" /> {req.classroomKey.classroomName} (Block {req.classroomKey.blockName})
-              </h2>
-              <p className="text-gray-700 mt-2">From: {req.student.name}</p>
-              <p className="text-gray-500">Requested on {new Date(req.requestTime).toLocaleString()}</p>
-              <div className="mt-4 flex justify-between items-center">
-                {req.status === "PENDING" ? (
-                  <>
-                    <button
-                      onClick={() => handleDecline(req.id)}
-                      className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => handleApprove(req.id)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                      Approve
-                    </button>
-                  </>
-                ) : req.status === "APPROVED" ? (
-                  <span className="text-green-600 font-bold">Approved</span>
-                ) : (
-                  <span className="text-red-600 font-bold">Declined</span>
-                )}
+          {requests.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <FaKey className="text-indigo-500 text-xl" />
               </div>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No requests found
+              </h3>
+              <p className="text-gray-500">
+                You haven't received any key requests yet.
+              </p>
             </div>
-          ))}
+          ) : (
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <div
+                  key={request.id}
+                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="font-bold text-lg text-gray-800 flex items-center">
+                        <FaKey className="text-indigo-500 mr-2" />
+                        {request.classroomKey.blockName} - {request.classroomKey.classroomName}
+                      </h2>
+                      <div className="mt-2 text-sm text-gray-600">
+                        <p>
+                          <span className="font-medium">From:</span> {request.student.name}
+                        </p>
+                        <p>
+                          <span className="font-medium">Requested:</span>{" "}
+                          {new Date(request.requestTime).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        request.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : request.status === "APPROVED"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {request.status}
+                    </span>
+                  </div>
+
+                  {request.status === "PENDING" ? (
+                    <div className="mt-4 flex justify-end space-x-3">
+                      <button
+                        onClick={() => handleDecline(request.id)}
+                        className="px-4 py-2 border border-red-500 text-red-500 rounded-md hover:bg-red-50 transition-colors flex items-center"
+                      >
+                        <FaTimes className="mr-2" />
+                        Decline
+                      </button>
+                      <button
+                        onClick={() => handleApprove(request.id)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center"
+                      >
+                        <FaCheck className="mr-2" />
+                        Approve
+                      </button>
+                    </div>
+                  ) : request.status === "DECLINED" ? (
+                    <div className="mt-4 text-right">
+                      <span className="text-sm text-gray-500 italic flex items-center justify-end">
+                        <FaTimes className="mr-1 text-red-500" />
+                        You declined this request
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-4 text-right">
+                      <span className="text-sm text-gray-500 italic flex items-center justify-end">
+                        <FaCheck className="mr-1 text-green-500" />
+                        You approved this request
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

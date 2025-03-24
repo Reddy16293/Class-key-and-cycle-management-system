@@ -1,304 +1,244 @@
-import { useState, useEffect } from "react";
-import { FaKey, FaBicycle, FaSignOutAlt, FaHistory, FaInfoCircle, FaEnvelope, FaHome } from "react-icons/fa";
-import { IoMenu } from "react-icons/io5";
-import { FiClock } from "react-icons/fi";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import StudentSidebar from "./StudentSidebar";
+import { 
+  FaKey, FaBicycle, FaSignOutAlt, FaHistory, 
+  FaInfoCircle, FaEnvelope, FaHome, FaUser,
+  FaClock, FaTimes, FaCheck, FaSpinner
+} from "react-icons/fa";
+import { IoMenu } from "react-icons/io5";
 
 const SentRequests = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [requests, setRequests] = useState([]); // Initialize as an empty array
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null); // State to store the user ID
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Fetch the current user ID
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get("http://localhost:8080/api/user", {
-        withCredentials: true,
-      });
-      return response.data?.id; // Return the user ID
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      return null;
-    }
-  };
-
-  // Fetch recipient details
-  const fetchRecipientDetails = async (recipientId) => {
-    try {
-      console.log("Fetching recipient details for ID:", recipientId); // Log the recipient ID
-      const response = await axios.get(`http://localhost:8080/api/student/${recipientId}`, {
-        withCredentials: true,
-      });
-      console.log("Recipient details:", response.data); // Log the recipient details
-      return response.data; // Return the recipient's details
-    } catch (error) {
-      console.error("Error fetching recipient details:", error);
-      return null;
-    }
-  };
-
-  // Fetch sent requests from the backend
+  // Fetch current user data
   useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true
+        });
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        setError("Failed to load user data");
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch sent requests when currentUser is available
+  useEffect(() => {
+    if (!currentUser) return;
+
     const fetchSentRequests = async () => {
       try {
-        const userId = await fetchCurrentUser(); // Fetch the current user ID
-        if (userId) {
-          setUserId(userId); // Set the user ID in the state
-          const response = await axios.get(`http://localhost:8080/api/key-requests/sent-requests/${userId}`, {
-            withCredentials: true, // Include credentials for authentication
-          });
-          console.log("Backend Response:", response.data); // Log the response for debugging
+        const response = await axios.get(
+          `http://localhost:8080/api/key-requests/sent-requests/${currentUser.id}`,
+          { withCredentials: true }
+        );
 
-          // Handle the case where the response is a string (e.g., "No key requests sent.")
-          if (typeof response.data === "string") {
-            setRequests([]); // Set requests to an empty array
-          } else if (Array.isArray(response.data)) {
-            // Fetch recipient details for each request
-            const requestsWithRecipients = await Promise.all(
-              response.data.map(async (req) => {
-                console.log("Request object:", req); // Log the request object
-                const recipient = await fetchRecipientDetails(req.recipientId); // Fetch recipient details
-                return { ...req, recipient }; // Add recipient details to the request object
-              })
-            );
-            console.log("Requests with recipients:", requestsWithRecipients); // Log the final requests array
-            setRequests(requestsWithRecipients); // Set requests with recipient details
-          } else {
-            console.error("Unexpected data format:", response.data);
-            setError("Unexpected data format received from the server.");
-          }
+        // Handle case where no requests exist
+        if (response.data.length === 0) {
+          setRequests([]);
         } else {
-          setError("User not authenticated. Please log in.");
+          setRequests(response.data);
         }
       } catch (error) {
         console.error("Error fetching sent requests:", error);
-        setError("Failed to fetch sent requests. Please try again later.");
+        setError(error.response?.data?.message || "Failed to fetch requests");
       } finally {
         setLoading(false);
       }
     };
 
     fetchSentRequests();
-  }, []);
+  }, [currentUser]);
 
-  // Handle canceling a request
   const handleCancelRequest = async (requestId) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/key-requests/cancel/${requestId}`, null, {
-        withCredentials: true, // Include credentials for authentication
-      });
-      if (response.status === 200) {
-        // Remove the canceled request from the list
-        setRequests((prev) => prev.filter((req) => req.id !== requestId));
-        alert("Request canceled successfully");
-      }
+      await axios.put(
+        `http://localhost:8080/api/key-requests/cancel/${requestId}`,
+        null,
+        { withCredentials: true }
+      );
+      
+      // Update the request status locally
+      setRequests(prevRequests =>
+        prevRequests.map(req =>
+          req.id === requestId ? { ...req, status: "CANCELED" } : req
+        )
+      );
     } catch (error) {
       console.error("Error canceling request:", error);
-      alert("Failed to cancel request. Please try again.");
+      alert(error.response?.data?.message || "Failed to cancel request");
     }
   };
 
-  // Show loading state while fetching data
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex h-screen bg-gray-50">
+        <StudentSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          user={currentUser} 
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <FaSpinner className="animate-spin text-4xl text-blue-500" />
+        </div>
       </div>
     );
   }
 
-  // Show error state if there's an error
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-red-500 text-lg">{error}</div>
+      <div className="flex h-screen bg-gray-50">
+        <StudentSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          user={currentUser} 
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md">
+            <h3 className="text-lg font-medium text-red-500 mb-2">Error</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Sidebar */}
-      <aside
-        className={`bg-gradient-to-b from-blue-600 to-blue-700 shadow-lg flex flex-col p-4 ${
-          sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300`}
-      >
-        <button
-          className="mb-4 p-2 text-white hover:bg-blue-500 rounded-full transition-colors"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <IoMenu className="text-xl" />
-        </button>
-        {sidebarOpen && (
-          <h2 className="text-xl font-bold mb-6 text-white">Student Portal</h2>
-        )}
-        <nav className="flex-1 space-y-2">
-          <button
-            onClick={() => navigate("/dashboard/student")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/dashboard/student"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Dashboard"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowkeys")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowkeys"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaKey className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Keys"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowbicycle")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowbicycle"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaBicycle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Bicycles"}
-          </button>
-          <button
-            onClick={() => navigate("/receivedrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/receivedrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaEnvelope className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Received Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/sentrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/sentrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FiClock className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sent Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/viewhistory")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/viewhistory"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHistory className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "View History"}
-          </button>
-          <button
-            onClick={() => navigate("/s-about")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/s-about"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "About"}
-          </button>
-        </nav>
-        <button
-          onClick={() => navigate("/")}
-          className={`w-full py-2 flex items-center ${
-            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-          } ${
-            location.pathname === "/"
-              ? "bg-blue-500 text-white"
-              : "text-white hover:bg-blue-500"
-          } rounded-lg transition-all`}
-        >
-          <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-          {sidebarOpen && "Sign Out"}
-        </button>
-      </aside>
+    <div className="flex h-screen bg-gray-50">
+      <StudentSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        user={currentUser} 
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Sent Requests</h1>
-        <p className="text-gray-600 mb-6">Manage your sent requests</p>
-        <div className="space-y-4">
-          {requests.length > 0 ? (
-            requests.map((req) => (
-              <div
-                key={req.id}
-                className="bg-white p-6 shadow-lg rounded-lg hover:shadow-xl transition-shadow"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold">
-                      {req.classroomKey.blockName} - Room {req.classroomKey.classroomName}
-                    </h2>
-                   {/*} <p className="text-gray-500">
-                      Requested by: {req.student.name} {/* Display the sender's name */}
-                   {/* </p>
-                   {/* <p className="text-gray-500">
-                      Sent to: {req.recipient?.name || "Unknown"} {/* Display the recipient's name */}
-                   {/*} </p>
-                    <p className="text-gray-500">
-                      Recipient Email: {req.recipient?.email || "Unknown"} {/* Display the recipient's email */}
-                    {/*</p> */}
-                    <p className="text-gray-500 flex items-center">
-                      📅 Requested on {new Date(req.requestTime).toLocaleString()}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      req.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : req.status === "APPROVED"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {req.status}
-                  </span>
-                </div>
-                {req.status === "PENDING" && (
-                  <button
-                    onClick={() => handleCancelRequest(req.id)}
-                    className="mt-4 py-2 px-4 border rounded-lg text-gray-700 hover:bg-gray-100 flex items-center justify-center transition-colors"
-                  >
-                    ❌ Cancel Request
-                  </button>
-                )}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-800">Sent Requests</h1>
+            <p className="text-gray-600">View all requests you've sent for classroom keys</p>
+          </div>
+
+          {requests.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <FaEnvelope className="text-blue-500 text-xl" />
               </div>
-            ))
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No sent requests
+              </h3>
+              <p className="text-gray-500">
+                You haven't sent any key requests yet.
+              </p>
+            </div>
           ) : (
-            <div className="text-gray-500">No sent requests found.</div>
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <div
+                  key={request.id}
+                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="font-bold text-lg text-gray-800 flex items-center">
+                        <FaKey className="text-blue-500 mr-2" />
+                        {request.classroom.blockName} - {request.classroom.classroomName}
+                      </h2>
+                      <div className="mt-2 text-sm text-gray-600 space-y-2">
+                        <p>
+                          <span className="font-medium">Status:</span>{" "}
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            request.status === "PENDING"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : request.status === "APPROVED"
+                              ? "bg-green-100 text-green-800"
+                              : request.status === "DECLINED"
+                              ? "bg-red-100 text-red-800"
+                              : request.status === "CANCELED"
+                              ? "bg-gray-100 text-gray-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {request.status}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="font-medium">Requested:</span>{" "}
+                          {new Date(request.requestTime).toLocaleString()}
+                        </p>
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="font-medium text-blue-700">At time of request:</p>
+                          <p>
+                            <span className="font-medium">Holder:</span>{" "}
+                            {request.holderAtRequestTime?.name || "No holder"}
+                            {request.holderAtRequestTime?.email && (
+                              <span className="text-gray-500 ml-1">({request.holderAtRequestTime.email})</span>
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-medium">Key Status:</span>{" "}
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${
+                              request.keyStatusAtRequest === "Available"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {request.keyStatusAtRequest || "Unknown"}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="font-medium text-gray-700">Current Status:</p>
+                          <p>
+                            <span className="font-medium">Holder:</span>{" "}
+                            {request.currentHolder?.name || "No current holder"}
+                            {request.currentHolder?.email && (
+                              <span className="text-gray-500 ml-1">({request.currentHolder.email})</span>
+                            )}
+                          </p>
+                          <p>
+                            <span className="font-medium">Key Status:</span>{" "}
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${
+                              request.keyStatus === "Available"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {request.keyStatus || "Unknown"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {request.status === "PENDING" && (
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => handleCancelRequest(request.id)}
+                        className="px-4 py-2 border border-red-500 text-red-500 rounded-md hover:bg-red-50 transition-colors flex items-center"
+                      >
+                        <FaTimes className="mr-2" />
+                        Cancel Request
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
