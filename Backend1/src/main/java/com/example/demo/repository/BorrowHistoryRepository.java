@@ -5,6 +5,7 @@ import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,11 +34,11 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
  // Find if a student already has this key and has not returned it
     Optional<BorrowHistory> findByStudentAndClassroomKeyAndIsReturned(User student, ClassroomKey classroomKey, boolean isReturned);
     
-    @Query("SELECT bh.student FROM BorrowHistory bh " +
-            "WHERE bh.classroomKey = :classroomKey " +
-            "AND bh.returnTime IS NULL " +  // Not returned yet
-            "ORDER BY bh.borrowTime DESC LIMIT 1")
-     Optional<User> findCurrentHolderByClassroomKey(@Param("classroomKey") ClassroomKey classroomKey);
+//    @Query("SELECT bh.student FROM BorrowHistory bh " +
+//            "WHERE bh.classroomKey = :classroomKey " +
+//            "AND bh.returnTime IS NULL " +  // Not returned yet
+//            "ORDER BY bh.borrowTime DESC LIMIT 1")
+//     Optional<User> findCurrentHolderByClassroomKey(@Param("classroomKey") ClassroomKey classroomKey);
 
     // Find if the key is currently borrowed by anyone
     Optional<BorrowHistory> findByClassroomKeyAndIsReturned(ClassroomKey classroomKey, boolean isReturned);
@@ -53,5 +54,46 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
     	    @Param("classroomKey") ClassroomKey classroomKey,
     	    @Param("timestamp") Timestamp timestamp
     	);
+    
+
+    
+    Optional<BorrowHistory> findTopByClassroomKeyAndBorrowTimeLessThanEqualAndIsReturnedOrderByBorrowTimeDesc(
+        ClassroomKey classroomKey, 
+        Timestamp borrowTime, 
+        boolean isReturned
+    );
+    
+    
+    @Query("SELECT bh FROM BorrowHistory bh " +
+            "WHERE bh.classroomKey = :classroomKey " +
+            "AND bh.borrowTime <= :timestamp " +
+            "AND bh.isReturned = false " +
+            "ORDER BY bh.borrowTime DESC")
+     List<BorrowHistory> findActiveBorrowsAtTime(
+         @Param("classroomKey") ClassroomKey classroomKey,
+         @Param("timestamp") Timestamp timestamp
+     );
+  
+    @Query("SELECT bh FROM BorrowHistory bh " +
+            "WHERE bh.classroomKey = :classroomKey " +
+            "AND bh.borrowTime <= :requestTime " +
+            "AND (bh.returnTime IS NULL OR bh.returnTime > :requestTime) " +
+            "ORDER BY bh.borrowTime DESC")
+     List<BorrowHistory> findHolderAtRequestTime(
+         @Param("classroomKey") ClassroomKey classroomKey,
+         @Param("requestTime") Timestamp requestTime
+     );
+
+     // Keep your existing method for current holder
+     @Query("SELECT bh.student FROM BorrowHistory bh " +
+            "WHERE bh.classroomKey = :classroomKey " +
+            "AND bh.returnTime IS NULL " +
+            "ORDER BY bh.borrowTime DESC LIMIT 1")
+     Optional<User> findCurrentHolderByClassroomKey(@Param("classroomKey") ClassroomKey classroomKey);
+     
+   
+     
+     
+    
 }
 

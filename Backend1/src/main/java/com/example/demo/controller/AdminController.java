@@ -59,10 +59,11 @@ public class AdminController {
     // ✅ Admin Signup Endpoint
     @PostMapping("/signup2")
     public ResponseEntity<String> signup2(@RequestBody User admin) {
-        System.out.println("Received Signup Request: " + admin.getEmail());
+        System.out.println("Received Signup Request: " + admin.getUserName());
 
-        if (userRepository.findByEmail(admin.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("Email already in use.");
+        // Check if userName is already in use
+        if (userRepository.findByUserName(admin.getUserName()).isPresent()) {
+            return ResponseEntity.badRequest().body("Username already in use.");
         }
 
         // ✅ Print raw password
@@ -78,6 +79,7 @@ public class AdminController {
 
         return ResponseEntity.ok("Admin registered successfully.");
     }
+
 
     // ✅ Admin Login Endpoint
     @PostMapping("/login2")
