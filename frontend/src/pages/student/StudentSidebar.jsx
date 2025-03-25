@@ -45,17 +45,7 @@ const StudentSidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
         )}
       </div>
 
-      {sidebarOpen && user && (
-        <div className="flex items-center mb-6 p-2 bg-indigo-600 rounded-lg">
-          <div className="bg-indigo-500 p-2 rounded-full mr-3">
-            <FaUser className="text-white" />
-          </div>
-          <div>
-            <p className="text-white font-medium">{user.name}</p>
-            <p className="text-indigo-200 text-xs">{user.email}</p>
-          </div>
-        </div>
-      )}
+      
 
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => (

@@ -4,7 +4,8 @@ import axios from "axios";
 import StudentSidebar from "./StudentSidebar";
 import { 
   FaKey, FaClock, FaTimes, FaCheck, 
-  FaExchangeAlt, FaSpinner, FaInfoCircle, FaTrash
+  FaExchangeAlt, FaSpinner, FaInfoCircle, FaTrash,
+  FaCalendarAlt, FaUser, FaBuilding, FaHistory
 } from "react-icons/fa";
 
 const SentRequests = () => {
@@ -180,19 +181,19 @@ const SentRequests = () => {
         user={currentUser} 
       />
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-6xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">Sent Requests</h1>
-            <p className="text-gray-600">View the status of your key requests</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Sent Requests</h1>
+            <p className="text-gray-600">Track the status of your key requests</p>
           </div>
 
           {requests.length === 0 ? (
-            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <FaKey className="text-blue-500 text-xl" />
+            <div className="bg-white p-8 rounded-xl shadow-sm text-center border border-gray-200">
+              <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <FaKey className="text-blue-500 text-2xl" />
               </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
+              <h3 className="text-xl font-medium text-gray-700 mb-2">
                 No sent requests
               </h3>
               <p className="text-gray-500">
@@ -200,7 +201,7 @@ const SentRequests = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {requests.map((request) => {
                 const safeRequest = {
                   ...request,
@@ -217,81 +218,94 @@ const SentRequests = () => {
                 return (
                   <div
                     key={safeRequest.id}
-                    className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all overflow-hidden"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h2 className="font-bold text-lg text-gray-800 flex items-center">
-                            <FaKey className="text-blue-500 mr-2" />
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h2 className="font-bold text-xl text-gray-800 flex items-center">
+                            <FaBuilding className="text-blue-500 mr-3" />
                             {safeRequest.classroomKey.blockName} - {safeRequest.classroomKey.classroomName}
                           </h2>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              safeRequest.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : safeRequest.status === "APPROVED"
-                                ? "bg-green-100 text-green-800"
-                                : safeRequest.status === "DECLINED"
-                                ? "bg-red-100 text-red-800"
-                                : safeRequest.status === "TRANSFER_INITIATED"
-                                ? "bg-purple-100 text-purple-800"
-                                : safeRequest.status === "TRANSFER_COMPLETED"
-                                ? "bg-teal-100 text-teal-800"
-                                : safeRequest.status === "CANCELLED"
-                                ? "bg-gray-100 text-gray-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {safeRequest.status}
-                          </span>
+                          <div className="flex items-center mt-2">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                safeRequest.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : safeRequest.status === "APPROVED"
+                                  ? "bg-green-100 text-green-800"
+                                  : safeRequest.status === "DECLINED"
+                                  ? "bg-red-100 text-red-800"
+                                  : safeRequest.status === "TRANSFER_INITIATED"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : safeRequest.status === "TRANSFER_COMPLETED"
+                                  ? "bg-teal-100 text-teal-800"
+                                  : safeRequest.status === "CANCELLED"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {safeRequest.status.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewDetails(safeRequest)}
+                          className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"
+                        >
+                          <FaInfoCircle className="text-lg" />
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center text-gray-600">
+                          <FaUser className="mr-3 text-gray-400" />
+                          <div>
+                            <p className="text-sm">Requested from</p>
+                            <p className="font-medium text-gray-800">{safeRequest.holderAtRequestTime.name}</p>
+                          </div>
                         </div>
                         
-                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center text-gray-600">
+                          <FaUser className="mr-3 text-gray-400" />
                           <div>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Holder when requested:</span> {safeRequest.holderAtRequestTime.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Current holder:</span> {safeRequest.currentHolder.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Requested:</span>{" "}
+                            <p className="text-sm">Current holder</p>
+                            <p className="font-medium text-gray-800">{safeRequest.currentHolder.name}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-600">
+                          <FaCalendarAlt className="mr-3 text-gray-400" />
+                          <div>
+                            <p className="text-sm">Requested on</p>
+                            <p className="font-medium text-gray-800">
                               {new Date(safeRequest.requestTime).toLocaleString()}
                             </p>
                           </div>
-                          
-                          <button
-                            onClick={() => handleViewDetails(safeRequest)}
-                            className="flex items-center text-blue-500 hover:text-blue-700 text-sm"
-                          >
-                            <FaInfoCircle className="mr-1" />
-                            View Details
-                          </button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="mt-4 flex space-x-3">
-                      {safeRequest.status === "TRANSFER_INITIATED" && (
-                        <button
-                          onClick={() => handleCompleteTransfer(safeRequest.id)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
-                        >
-                          <FaExchangeAlt className="mr-2" />
-                          Complete Transfer
-                        </button>
-                      )}
                       
-                      {(safeRequest.status === "PENDING" || safeRequest.status === "APPROVED") && (
-                        <button
-                          onClick={() => handleCancelRequest(safeRequest.id)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
-                        >
-                          <FaTrash className="mr-2" />
-                          Cancel Request
-                        </button>
-                      )}
+                      <div className="mt-6 flex space-x-3">
+                        {safeRequest.status === "TRANSFER_INITIATED" && (
+                          <button
+                            onClick={() => handleCompleteTransfer(safeRequest.id)}
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all flex items-center justify-center shadow-md hover:shadow-lg"
+                          >
+                            <FaExchangeAlt className="mr-2" />
+                            Complete Transfer
+                          </button>
+                        )}
+                        
+                        {(safeRequest.status === "PENDING" || safeRequest.status === "APPROVED") && (
+                          <button
+                            onClick={() => handleCancelRequest(safeRequest.id)}
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all flex items-center justify-center shadow-md hover:shadow-lg"
+                          >
+                            <FaTrash className="mr-2" />
+                            Cancel
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -304,72 +318,107 @@ const SentRequests = () => {
       {/* Request Details Modal */}
       {selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-gray-800">
-                  Request Details
-                </h3>
-                <button
-                  onClick={handleCloseDetails}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h4 className="font-medium text-gray-700">Classroom</h4>
-                  <p className="text-gray-900">
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Request Details
+                  </h3>
+                  <p className="text-gray-500 text-sm">
                     {selectedRequest.classroomKey.blockName} - {selectedRequest.classroomKey.classroomName}
                   </p>
                 </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-700">Holder When Requested</h4>
-                  <p className="text-gray-900">{selectedRequest.holderAtRequestTime.name}</p>
-                  {selectedRequest.holderAtRequestTime.email && (
-                    <p className="text-gray-600 text-sm">{selectedRequest.holderAtRequestTime.email}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-700">Current Holder</h4>
-                  <p className="text-gray-900">{selectedRequest.currentHolder.name}</p>
-                  {selectedRequest.currentHolder.email && (
-                    <p className="text-gray-600 text-sm">{selectedRequest.currentHolder.email}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-700">Request Time</h4>
-                  <p className="text-gray-900">
-                    {new Date(selectedRequest.requestTime).toLocaleString()}
-                  </p>
-                </div>
-                
-                {selectedRequest.startTime && selectedRequest.endTime && (
-                  <div>
-                    <h4 className="font-medium text-gray-700">Requested Time Slot</h4>
-                    <p className="text-gray-900">
-                      {new Date(selectedRequest.startTime).toLocaleString()} -{" "}
-                      {new Date(selectedRequest.endTime).toLocaleString()}
-                    </p>
+                <button
+                  onClick={handleCloseDetails}
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
+                >
+                  <FaTimes className="text-lg" />
+                </button>
+              </div>
+              
+              <div className="space-y-5">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <FaKey className="mr-2 text-blue-500" />
+                    Classroom Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Block</p>
+                      <p className="text-gray-900 font-medium">{selectedRequest.classroomKey.blockName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Classroom</p>
+                      <p className="text-gray-900 font-medium">{selectedRequest.classroomKey.classroomName}</p>
+                    </div>
                   </div>
-                )}
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <FaUser className="mr-2 text-blue-500" />
+                    Key Holders
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Holder When Requested</p>
+                      <p className="text-gray-900 font-medium">{selectedRequest.holderAtRequestTime.name}</p>
+                      {selectedRequest.holderAtRequestTime.email && (
+                        <p className="text-gray-600 text-sm">{selectedRequest.holderAtRequestTime.email}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Current Holder</p>
+                      <p className="text-gray-900 font-medium">{selectedRequest.currentHolder.name}</p>
+                      {selectedRequest.currentHolder.email && (
+                        <p className="text-gray-600 text-sm">{selectedRequest.currentHolder.email}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <FaClock className="mr-2 text-blue-500" />
+                    Timing Information
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Request Time</p>
+                      <p className="text-gray-900 font-medium">
+                        {new Date(selectedRequest.requestTime).toLocaleString()}
+                      </p>
+                    </div>
+                    {selectedRequest.startTime && selectedRequest.endTime && (
+                      <div>
+                        <p className="text-xs text-gray-500">Requested Time Slot</p>
+                        <p className="text-gray-900 font-medium">
+                          {new Date(selectedRequest.startTime).toLocaleString()} -{" "}
+                          {new Date(selectedRequest.endTime).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 
                 {selectedRequest.purpose && (
-                  <div>
-                    <h4 className="font-medium text-gray-700">Purpose</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                      <FaInfoCircle className="mr-2 text-blue-500" />
+                      Purpose
+                    </h4>
                     <p className="text-gray-900">{selectedRequest.purpose}</p>
                   </div>
                 )}
                 
-                <div>
-                  <h4 className="font-medium text-gray-700">Status</h4>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <FaHistory className="mr-2 text-blue-500" />
+                    Status
+                  </h4>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${
                       selectedRequest.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-800"
                         : selectedRequest.status === "APPROVED"
@@ -385,7 +434,7 @@ const SentRequests = () => {
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {selectedRequest.status}
+                    {selectedRequest.status.replace(/_/g, ' ')}
                   </span>
                 </div>
               </div>

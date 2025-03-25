@@ -2,90 +2,37 @@ import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
-import {
-  FaKey,
-  FaBicycle,
-  FaSignOutAlt,
-  FaHistory,
-  FaInfoCircle,
-  FaEnvelope,
-  FaHome,
-  FaSearch,
-  FaDownload,
-} from "react-icons/fa";
+import { FaKey, FaBicycle, FaSearch, FaDownload, FaCalendarAlt, FaFilter } from "react-icons/fa";
 import { IoMenu } from "react-icons/io5";
-import { useLocation, useNavigate } from "react-router-dom";
-import { FiClock } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import StudentSidebar from "./StudentSidebar";
 
 const ViewHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("keys");
-  const [filterOption, setFilterOption] = useState("all"); // "all" or "date"
-  const [statusFilter, setStatusFilter] = useState("all"); // "all", "returned", "not_returned"
+  const [filterOption, setFilterOption] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState(null);
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Fetch the current user's ID
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get("http://localhost:8080/api/user", {
-        withCredentials: true,
-      });
-      return response.data?.id; // Return the user ID
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      return null;
-    }
-  };
+  // Fetch user and history data (keep your existing useEffect hooks)
 
-  // Fetch borrowing history for the current user
-  const fetchBorrowingHistory = async (userId) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/history/user/${userId}`,
-        { withCredentials: true }
-      );
-      return response.data; // Return the history data
-    } catch (error) {
-      console.error("Error fetching borrowing history:", error);
-      throw error;
-    }
-  };
-
-  // Load history data when the component mounts
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const userId = await fetchCurrentUser();
-        if (!userId) {
-          setError("User not authenticated. Please log in.");
-          return;
-        }
-
-        const history = await fetchBorrowingHistory(userId);
-        setHistoryData(history);
-      } catch (error) {
-        setError("Failed to load history data. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Format the time to a readable format
   const formatTime = (time) => {
-    if (!time) return "Not Returned";
+    if (!time) return <span className="text-red-500">Not Returned</span>;
     const date = new Date(time);
-    return date.toLocaleString(); // Format as "3/19/2025, 7:02:55 PM"
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
   };
 
-  // Filter history data based on status
   const filteredHistory = historyData.filter((entry) => {
     if (statusFilter === "all") return true;
     if (statusFilter === "returned") return entry.returnTime !== null;
@@ -94,242 +41,169 @@ const ViewHistory = () => {
   });
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside
-        className={`bg-gradient-to-b from-blue-600 to-blue-700 shadow-lg flex flex-col p-4 ${
-          sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300`}
-      >
-        <button
-          className="mb-4 p-2 text-white hover:bg-blue-500 rounded-full transition-colors"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <IoMenu className="text-xl" />
-        </button>
-        {sidebarOpen && (
-          <h2 className="text-xl font-bold mb-6 text-white">Student Portal</h2>
-        )}
-        <nav className="flex-1 space-y-2">
-          <button
-            onClick={() => navigate("/dashboard/student")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/dashboard/student"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Dashboard"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowkeys")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowkeys"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaKey className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Keys"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowbicycle")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowbicycle"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaBicycle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Bicycles"}
-          </button>
-          <button
-            onClick={() => navigate("/receivedrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/receivedrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaEnvelope className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Received Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/sentrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/sentrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FiClock className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sent Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/viewhistory")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/viewhistory"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHistory className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "View History"}
-          </button>
-          <button
-            onClick={() => navigate("/s-about")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/s-about"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "About"}
-          </button>
-        </nav>
-        <button
-          onClick={() => navigate("/")}
-          className={`w-full py-2 flex items-center ${
-            sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-          } ${
-            location.pathname === "/"
-              ? "bg-blue-500 text-white"
-              : "text-white hover:bg-blue-500"
-          } rounded-lg transition-all`}
-        >
-          <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-          {sidebarOpen && "Sign Out"}
-        </button>
-      </aside>
+      <StudentSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        user={currentUser}
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Borrowing History</h1>
-        <p className="text-gray-600 mb-6">
-          View your history of borrowed keys and bicycles
-        </p>
-
-        {/* Search & Filters */}
-        <div className="flex items-center space-x-4 mt-4">
-          <div className="flex items-center border rounded-lg px-3 py-2 w-1/2 bg-white shadow-sm">
-            <FaSearch className="text-gray-500 mr-2" />
-            <input
-              type="text"
-              placeholder="Search history..."
-              className="w-full focus:outline-none"
-            />
-          </div>
-
-          {/* Dropdown for Date Selection */}
-          <div className="relative">
-            <select
-              className="border rounded-lg px-3 py-2 cursor-pointer bg-white shadow-sm focus:outline-none"
-              value={filterOption}
-              onChange={(e) => setFilterOption(e.target.value)}
-            >
-              <option value="all">All Time</option>
-              <option value="date">Select Date</option>
-            </select>
-          </div>
-
-          {/* Dropdown for Status Filter */}
-          <div className="relative">
-            <select
-              className="border rounded-lg px-3 py-2 cursor-pointer bg-white shadow-sm focus:outline-none"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="returned">Returned</option>
-              <option value="not_returned">Not Returned</option>
-            </select>
-          </div>
-
-          {/* Date Picker (Only Shown if "Select Date" is Chosen) */}
-          {filterOption === "date" && (
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              className="border rounded-lg px-3 py-2 cursor-pointer bg-white shadow-sm focus:outline-none"
-              placeholderText="Choose date"
-              isClearable
-            />
-          )}
-
-          {/* Export Button */}
-          <button className="border rounded-lg px-3 py-2 flex items-center bg-white shadow-sm hover:bg-gray-100 transition-colors">
-            <FaDownload className="mr-2" /> Export
-          </button>
+      {/* Enhanced Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
+          <h1 className="text-3xl font-bold">Borrowing History</h1>
+          <p className="text-blue-100 mt-1">
+            Track all your key and bicycle transactions
+          </p>
         </div>
 
-        {/* Tabs for Keys and Bicycles */}
-        <div className="mt-6 flex border-b">
-          <button
-            className={`px-6 py-3 ${
-              activeTab === "keys"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-500 hover:text-blue-500"
-            } transition-colors`}
-            onClick={() => setActiveTab("keys")}
-          >
-            Keys
-          </button>
-          <button
-            className={`px-6 py-3 ${
-              activeTab === "bicycles"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-500 hover:text-blue-500"
-            } transition-colors`}
-            onClick={() => setActiveTab("bicycles")}
-          >
-            Bicycles
-          </button>
-        </div>
-
-        {/* History List */}
-        <div className="mt-4">
-          {loading ? (
-            <p>Loading history...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : filteredHistory.length === 0 ? (
-            <p>No history found.</p>
-          ) : (
-            filteredHistory.map((entry, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between border-b py-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <FaKey className="text-blue-500 text-lg" />
-                  <div>
-                    <h3 className="font-semibold">
-                      Room {entry.classroomKey.classroomName} - {entry.classroomKey.blockName}
-                    </h3>
-                    <p className="text-gray-500">
-                      Booked from {formatTime(entry.borrowTime)} to {formatTime(entry.returnTime)}
-                    </p>
-                  </div>
+        {/* Main Content Container */}
+        <div className="p-6 max-w-7xl mx-auto">
+          {/* Filters Card */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+              {/* Search */}
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Search history..."
+                  className="pl-10 w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
-            ))
-          )}
+
+              {/* Date Filter */}
+              <div className="flex items-center space-x-2">
+                <FaCalendarAlt className="text-gray-500" />
+                <select
+                  className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filterOption}
+                  onChange={(e) => setFilterOption(e.target.value)}
+                >
+                  <option value="all">All Time</option>
+                  <option value="date">Select Date</option>
+                </select>
+                {filterOption === "date" && (
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={(date) => setSelectedDate(date)}
+                    className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholderText="Choose date"
+                    isClearable
+                  />
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center space-x-2">
+                <FaFilter className="text-gray-500" />
+                <select
+                  className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="returned">Returned</option>
+                  <option value="not_returned">Not Returned</option>
+                </select>
+              </div>
+
+              {/* Export Button */}
+              <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                <FaDownload />
+                <span>Export</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b mb-6">
+            <button
+              className={`px-6 py-3 font-medium ${
+                activeTab === "keys"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-blue-500"
+              } transition-colors`}
+              onClick={() => setActiveTab("keys")}
+            >
+              <div className="flex items-center space-x-2">
+                <FaKey />
+                <span>Keys</span>
+              </div>
+            </button>
+            <button
+              className={`px-6 py-3 font-medium ${
+                activeTab === "bicycles"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-blue-500"
+              } transition-colors`}
+              onClick={() => setActiveTab("bicycles")}
+            >
+              <div className="flex items-center space-x-2">
+                <FaBicycle />
+                <span>Bicycles</span>
+              </div>
+            </button>
+          </div>
+
+          {/* History List */}
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading your history...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center text-red-500">{error}</div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                No history records found
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {filteredHistory.map((entry, index) => (
+                  <div
+                    key={index}
+                    className="p-6 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-blue-100 p-3 rounded-full">
+                          <FaKey className="text-blue-600 text-lg" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">
+                            {entry.classroomKey?.classroomName || 'Unknown Room'} - {entry.classroomKey?.blockName || 'Unknown Block'}
+                          </h3>
+                          <div className="mt-2 text-sm text-gray-600">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Borrowed:</span>
+                              <span>{formatTime(entry.borrowTime)}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Returned:</span>
+                              <span>{formatTime(entry.returnTime)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          entry.returnTime ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {entry.returnTime ? 'Returned' : 'Pending Return'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
