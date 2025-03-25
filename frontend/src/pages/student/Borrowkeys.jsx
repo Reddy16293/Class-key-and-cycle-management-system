@@ -1,42 +1,31 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  FaKey,
-  FaBicycle,
-  FaEnvelope,
-  FaHistory,
-  FaInfoCircle,
-  FaSignOutAlt,
-  FaBuilding,
-  FaHome,
-  FaLock,
-} from "react-icons/fa";
-import { FiClock } from "react-icons/fi";
-import { IoMenu } from "react-icons/io5";
-import { useLocation, useNavigate } from "react-router-dom";
+import { FaKey, FaBuilding, FaLock, FaSearch, FaUser, FaInfoCircle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import StudentSidebar from "./StudentSidebar";
+import RequestModal from "./RequestModal";
+import ClassroomBookingModal from "./ClassroomBookingModal";
 
 const BorrowKeys = () => {
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [startTime, setStartTime] = useState("2.00");
-  const [startPeriod, setStartPeriod] = useState("PM");
-  const [endTime, setEndTime] = useState("5.00");
-  const [endPeriod, setEndPeriod] = useState("PM");
   const [classrooms, setClassrooms] = useState([]);
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [keyStatuses, setKeyStatuses] = useState({});
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Fetch current user's ID on component mount
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
         const response = await axios.get("http://localhost:8080/api/user", {
           withCredentials: true,
         });
-        setCurrentUserId(response.data.id);
+        setCurrentUser(response.data);
       } catch (error) {
         console.error("Error fetching current user:", error);
       }
@@ -44,7 +33,6 @@ const BorrowKeys = () => {
     fetchCurrentUser();
   }, []);
 
-  // Process block name and floor
   const processBlockName = (blockName) => {
     return blockName.replace(" Block", "").trim();
   };
@@ -53,8 +41,8 @@ const BorrowKeys = () => {
     return floor.replace(/\D/g, "");
   };
 
-  // Fetch available rooms based on building and floor
   const fetchAvailableRooms = async (blockName, floor) => {
+    setLoading(true);
     try {
       const processedBlockName = processBlockName(blockName);
       const processedFloor = processFloor(floor);
@@ -66,11 +54,33 @@ const BorrowKeys = () => {
 
       if (Array.isArray(response.data)) {
         setClassrooms(response.data);
+        
+        const statuses = {};
+        for (const room of response.data) {
+          if (room.isAvailable === 0) {
+            try {
+              const statusResponse = await axios.get(
+                `http://localhost:8080/api/key-requests/request-details/${room.id}`,
+                { withCredentials: true }
+              );
+              statuses[room.id] = statusResponse.data;
+            } catch (error) {
+              console.error(`Error fetching status for room ${room.id}:`, error);
+              statuses[room.id] = { 
+                keyStatus: "Unavailable",
+                error: "Could not fetch details" 
+              };
+            }
+          }
+        }
+        setKeyStatuses(statuses);
       } else {
         throw new Error("Invalid response format: Expected an array");
       }
     } catch (error) {
       console.error("Error fetching available rooms:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,7 +90,6 @@ const BorrowKeys = () => {
     }
   }, [building, floor]);
 
-  // Handle borrowing a classroom key
   const handleBorrowClick = (room) => {
     setSelectedRoom({
       building,
@@ -103,7 +112,7 @@ const BorrowKeys = () => {
         null,
         {
           params: {
-            userId: currentUserId,
+            userId: currentUser.id,
           },
           withCredentials: true,
         }
@@ -118,355 +127,261 @@ const BorrowKeys = () => {
     }
   };
 
-  // Request access to a key booked by another student
-  const handleRequestAccess = async (keyId) => {
+  const userHasKey = (keyId) => {
+    if (!currentUser) return false;
+    const status = keyStatuses[keyId];
+    return status?.currentHolder?.id === currentUser.id;
+  };
+
+  const handleRequestAccess = (room) => {
+    setSelectedRoom({
+      building,
+      floor,
+      room: room.classroomName,
+      keyId: room.id,
+    });
+    setShowRequestModal(true);
+  };
+
+  const handleSubmitRequest = async (requestData) => {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/key-requests/request",
         null,
         {
           params: {
-            studentId: currentUserId, // Use the current user's ID dynamically
-            classroomKeyId: keyId,
+            studentId: currentUser.id,
+            classroomKeyId: selectedRoom.keyId,
+            startTime: requestData.startTime,
+            endTime: requestData.endTime,
+            purpose: requestData.purpose
           },
           withCredentials: true,
         }
       );
 
       alert(response.data);
-      fetchAvailableRooms(building, floor); // Refresh the list of available rooms
+      fetchAvailableRooms(building, floor);
+      setShowRequestModal(false);
+      setSelectedRoom(null);
     } catch (error) {
       console.error("Error requesting access:", error);
       alert("Failed to request access. Please try again.");
     }
   };
 
-  // Fetch key request details
-  const fetchKeyRequestDetails = async (classroomKeyId) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/key-requests/request-details/${classroomKeyId}`
-      );
-
-      if (response.data === "Key is available") {
-        alert("Key is available for booking.");
-      } else {
-        const keyRequest = response.data;
-
-        if (keyRequest.student.id === currentUserId) {
-          alert("You already booked this key.");
-        } else {
-          alert(`Key is currently booked by ${keyRequest.student.name}.`);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching key request details:", error);
-      alert("Failed to fetch key request details.");
-    }
-  };
+  const filteredClassrooms = classrooms.filter((room) =>
+    room.classroomName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Sidebar */}
-      <aside
-        className={`bg-gradient-to-b from-blue-600 to-blue-700 shadow-lg flex flex-col p-4 ${
-          sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300`}
-      >
-        <button
-          className="mb-4 p-2 text-white hover:bg-blue-500 rounded-full transition-colors"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <IoMenu className="text-xl" />
-        </button>
-        {sidebarOpen && (
-          <h2 className="text-xl font-bold mb-6 text-white">Student Portal</h2>
-        )}
-        <nav className="flex-1 space-y-2">
-          <button
-            onClick={() => navigate("/dashboard/student")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/dashboard/student"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHome className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Dashboard"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowkeys")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowkeys"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaKey className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Keys"}
-          </button>
-          <button
-            onClick={() => navigate("/borrowbicycle")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/borrowbicycle"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaBicycle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Borrow Bicycles"}
-          </button>
-          <button
-            onClick={() => navigate("/receivedrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/receivedrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaEnvelope className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Received Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/sentrequests")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/sentrequests"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FiClock className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sent Requests"}
-          </button>
-          <button
-            onClick={() => navigate("/viewhistory")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/viewhistory"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaHistory className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "View History"}
-          </button>
-          <button
-            onClick={() => navigate("/s-about")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/s-about"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaInfoCircle className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "About"}
-          </button>
-        </nav>
-        <button
-            onClick={() => navigate("/")}
-            className={`w-full py-2 flex items-center ${
-              sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-            } ${
-              location.pathname === "/"
-                ? "bg-blue-500 text-white"
-                : "text-white hover:bg-blue-500"
-            } rounded-lg transition-all`}
-          >
-            <FaSignOutAlt className={`${sidebarOpen ? "mr-2" : ""}`} />
-            {sidebarOpen && "Sign Out"}
-          </button>
-      </aside>
+    <div className="flex h-screen bg-gray-50">
+      <StudentSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        user={currentUser}
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          {!selectedRoom ? (
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 md:p-8 max-w-6xl mx-auto">
+          {!selectedRoom && !showRequestModal ? (
             <>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Classroom Keys
-              </h1>
-              <p className="text-gray-600 mb-6">
-                Select a building and floor to see available classroom keys
-              </p>
-
-              {/* Building and Floor Selection */}
-              <div className="flex space-x-4 mb-8">
-                <select
-                  className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={building}
-                  onChange={(e) => {
-                    setBuilding(e.target.value);
-                    setFloor("");
-                  }}
-                >
-                  <option value="">Select a building</option>
-                  <option value="ELHC Block">ELHC Block</option>
-                  <option value="A Block">A Block</option>
-                  <option value="B Block">B Block</option>
-                  <option value="C Block">C Block</option>
-                </select>
-                <select
-                  className="border p-3 rounded-lg w-1/2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
-                  disabled={!building}
-                >
-                  <option value="">
-                    {building ? "Select a floor" : "Select a building first"}
-                  </option>
-                  <option value="1st Floor">1st Floor</option>
-                  <option value="2nd Floor">2nd Floor</option>
-                  <option value="3rd Floor">3rd Floor</option>
-                  <option value="4th Floor">4th Floor</option>
-                </select>
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  Classroom Keys
+                </h1>
+                <p className="text-gray-600">
+                  Select a building and floor to see available classroom keys
+                </p>
               </div>
 
-              {/* Classroom List */}
+              <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Building
+                    </label>
+                    <select
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      value={building}
+                      onChange={(e) => {
+                        setBuilding(e.target.value);
+                        setFloor("");
+                      }}
+                    >
+                      <option value="">Select a building</option>
+                      <option value="ELHC Block">ELHC Block</option>
+                      <option value="A Block">A Block</option>
+                      <option value="B Block">B Block</option>
+                      <option value="C Block">C Block</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Floor
+                    </label>
+                    <select
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      value={floor}
+                      onChange={(e) => setFloor(e.target.value)}
+                      disabled={!building}
+                    >
+                      <option value="">
+                        {building ? "Select a floor" : "Select a building first"}
+                      </option>
+                      <option value="1st Floor">1st Floor</option>
+                      <option value="2nd Floor">2nd Floor</option>
+                      <option value="3rd Floor">3rd Floor</option>
+                      <option value="4th Floor">4th Floor</option>
+                    </select>
+                  </div>
+                </div>
+
+                {building && floor && (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaSearch className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search classrooms..."
+                      className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
               {!building || !floor ? (
-                <div className="flex flex-col items-center text-gray-500">
-                  <FaBuilding className="text-6xl mb-4" />
-                  <p className="text-lg font-medium">Select a building and floor</p>
-                  <p className="text-sm">
-                    Choose a building and floor to see available classrooms
-                  </p>
+                <div className="bg-white p-8 rounded-xl shadow-sm text-center">
+                  <div className="max-w-md mx-auto">
+                    <FaBuilding className="text-6xl text-indigo-200 mx-auto mb-4" />
+                    <h3 className="text-xl font-medium text-gray-700 mb-2">
+                      Select a building and floor
+                    </h3>
+                    <p className="text-gray-500">
+                      Choose a building and floor to see available classrooms
+                    </p>
+                  </div>
+                </div>
+              ) : loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
                 </div>
               ) : (
-                <div className="bg-white p-6 shadow-lg rounded-lg">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Available Classrooms - {building}, {floor}
-                  </h2>
-                  <ul className="space-y-3">
-                    {classrooms.map((room) => (
-                      <li
-                        key={room.id}
-                        className="p-4 flex items-center justify-between border rounded-lg hover:shadow-md transition-shadow"
-                      >
-                        <span
-                          className={`font-medium ${
-                            room.isAvailable === 1 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          Room {room.classroomName} -{" "}
-                          <span
-                            className={`inline-block px-2 py-1 rounded-full text-sm ${
-                              room.isAvailable === 1
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {room.isAvailable === 1 ? "Available" : "In Use"}
-                          </span>
-                        </span>
-                        {room.isAvailable === 1 ? (
-                          <button
-                            onClick={() => handleBorrowClick(room)}
-                            className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-600 transition-colors"
-                          >
-                            Borrow Key <FaKey className="ml-2" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleRequestAccess(room.id)} // Call handleRequestAccess with the key ID
-                            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition-colors"
-                          >
-                            Request Key <FaLock className="ml-2" />
-                          </button>
-                        )}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 bg-gray-50 border-b">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Available Classrooms - {building}, {floor}
+                    </h2>
+                  </div>
+                  <ul className="divide-y divide-gray-200">
+                    {filteredClassrooms.length > 0 ? (
+                      filteredClassrooms.map((room) => {
+                        const hasKey = userHasKey(room.id);
+                        const status = keyStatuses[room.id] || {};
+                        const currentHolder = status?.currentHolder;
+                        const requester = status?.requester;
+                        
+                        return (
+                          <li key={room.id} className="p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className={`font-medium ${
+                                  room.isAvailable === 1 ? "text-indigo-600" : "text-gray-600"
+                                }`}>
+                                  Room {room.classroomName}
+                                </span>
+                                <span className={`ml-2 inline-block px-2 py-1 text-xs rounded-full ${
+                                  room.isAvailable === 1 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}>
+                                  {room.isAvailable === 1 ? "Available" : "In Use"}
+                                </span>
+                                {hasKey && (
+                                  <span className="ml-2 inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                    You have this key
+                                  </span>
+                                )}
+                              </div>
+                              {room.isAvailable === 1 ? (
+                                <button
+                                  onClick={() => handleBorrowClick(room)}
+                                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-colors flex items-center"
+                                >
+                                  <FaKey className="mr-2" />
+                                  Borrow Key
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleRequestAccess(room)}
+                                  disabled={hasKey}
+                                  className={`px-4 py-2 rounded-lg flex items-center ${
+                                    hasKey
+                                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors"
+                                  }`}
+                                >
+                                  <FaLock className="mr-2" />
+                                  {hasKey ? "You have this key" : "Request Access"}
+                                </button>
+                              )}
+                            </div>
+                            
+                            {room.isAvailable === 0 && currentHolder && (
+                              <div className="mt-2 text-sm text-gray-500 flex items-center">
+                                <FaUser className="mr-2 text-gray-400" />
+                                <span>
+                                  Currently held by: {currentHolder.name}
+                                  {currentHolder.email && ` (${currentHolder.email})`}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {room.isAvailable === 0 && requester && !hasKey && (
+                              <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                <FaInfoCircle className="mr-2 text-gray-400" />
+                                <span>
+                                  Requested by: {requester.name}
+                                  {requester.email && ` (${requester.email})`}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {room.isAvailable === 0 && !currentHolder && !requester && (
+                              <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                <FaInfoCircle className="mr-2 text-gray-400" />
+                                <span>Key is currently unavailable</span>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })
+                    ) : (
+                      <li className="p-8 text-center text-gray-500">
+                        No classrooms found matching your search
                       </li>
-                    ))}
+                    )}
                   </ul>
                 </div>
               )}
             </>
+          ) : showRequestModal ? (
+            <RequestModal
+              selectedRoom={selectedRoom}
+              handleSubmit={handleSubmitRequest}
+              handleCancel={() => {
+                setShowRequestModal(false);
+                setSelectedRoom(null);
+              }}
+              userId={currentUser?.id}
+            />
           ) : (
-            // Booking Form
-            <div className="bg-white p-6 shadow-lg rounded-lg">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                Book Classroom Key
-              </h2>
-              <div className="mb-6">
-                <p className="text-lg font-medium text-gray-700">
-                  {selectedRoom.building}, {selectedRoom.floor}
-                </p>
-                <p className="text-gray-600">Room {selectedRoom.room}</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start time
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="border p-2 rounded-lg w-24"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                      />
-                      <select
-                        className="border p-2 rounded-lg"
-                        value={startPeriod}
-                        onChange={(e) => setStartPeriod(e.target.value)}
-                      >
-                        <option>AM</option>
-                        <option>PM</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      End time
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="border p-2 rounded-lg w-24"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                      />
-                      <select
-                        className="border p-2 rounded-lg"
-                        value={endPeriod}
-                        onChange={(e) => setEndPeriod(e.target.value)}
-                      >
-                        <option>AM</option>
-                        <option>PM</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 mt-8">
-                  <button
-                    onClick={handleBookNow}
-                    className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Book Now
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ClassroomBookingModal
+              selectedRoom={selectedRoom}
+              handleBookNow={handleBookNow}
+              handleCancel={handleCancel}
+            />
           )}
         </div>
       </div>

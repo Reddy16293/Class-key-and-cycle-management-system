@@ -13,56 +13,49 @@ public class KeyRequest {
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
-    private User student;  // The requester
+    private User student;
 
     @ManyToOne
     @JoinColumn(name = "classroom_key_id", nullable = false)
-    private ClassroomKey classroomKey;  // The key being requested
+    private ClassroomKey classroomKey;
 
     @Column(nullable = false)
     private Timestamp requestTime;
 
     @Column(nullable = false)
-    private String status;  // PENDING, APPROVED, REJECTED
+    private String status; // PENDING, APPROVED, REJECTED, TRANSFER_INITIATED, TRANSFER_COMPLETED
+
+    @Column(name = "start_time")
+    private Timestamp startTime;
+    
+    @Column(name = "end_time")
+    private Timestamp endTime;
+    
+    @Column(name = "purpose")
+    private String purpose;
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public User getStudent() { return student; }
+    public void setStudent(User student) { this.student = student; }
 
-    public User getStudent() {
-        return student;
-    }
+    public ClassroomKey getClassroomKey() { return classroomKey; }
+    public void setClassroomKey(ClassroomKey classroomKey) { this.classroomKey = classroomKey; }
 
-    public void setStudent(User student) {
-        this.student = student;
-    }
+    public Timestamp getRequestTime() { return requestTime; }
+    public void setRequestTime(Timestamp requestTime) { this.requestTime = requestTime; }
 
-    public ClassroomKey getClassroomKey() {
-        return classroomKey;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setClassroomKey(ClassroomKey classroomKey) {
-        this.classroomKey = classroomKey;
-    }
+    public Timestamp getStartTime() { return startTime; }
+    public void setStartTime(Timestamp startTime) { this.startTime = startTime; }
 
-    public Timestamp getRequestTime() {
-        return requestTime;
-    }
+    public Timestamp getEndTime() { return endTime; }
+    public void setEndTime(Timestamp endTime) { this.endTime = endTime; }
 
-    public void setRequestTime(Timestamp requestTime) {
-        this.requestTime = requestTime;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 }

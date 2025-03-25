@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.KeyRequest;
+import com.example.demo.model.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,5 +21,9 @@ public interface ClassroomKeyRepository extends JpaRepository<ClassroomKey, Long
 	  List<ClassroomKey> findByBlockNameAndFloorAndIsAvailable(String blockName, String floor, int isAvailable);
 	  List<ClassroomKey> findByBlockNameAndFloor(String blockName, String floor);
 	  Optional<ClassroomKey> findById(Long id);
+	  
+	  @Query("SELECT ck FROM ClassroomKey ck JOIN BorrowHistory bh ON ck.id = bh.classroomKey.id " +
+		       "WHERE bh.student = :user AND bh.returnTime IS NULL")
+		List<ClassroomKey> findByCurrentHolder(@Param("user") User user);
 	 
 }
