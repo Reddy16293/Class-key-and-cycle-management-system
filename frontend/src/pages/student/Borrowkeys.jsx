@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaKey, FaBuilding, FaLock, FaSearch, FaUser, FaInfoCircle } from "react-icons/fa";
+import { 
+  FaKey, 
+  FaBuilding, 
+  FaLock, 
+  FaSearch, 
+  FaUser, 
+  FaInfoCircle, 
+  FaArrowRight 
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
 import RequestModal from "./RequestModal";
@@ -175,7 +183,7 @@ const BorrowKeys = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <StudentSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -187,47 +195,49 @@ const BorrowKeys = () => {
           {!selectedRoom && !showRequestModal ? (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                  Classroom Keys
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                  Classroom Key Management
                 </h1>
-                <p className="text-gray-600">
-                  Select a building and floor to see available classroom keys
+                <p className="text-lg text-gray-600 font-medium">
+                  Discover and manage classroom keys with ease
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Building
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <FaBuilding className="mr-2 text-indigo-500" />
+                      Select Building
                     </label>
                     <select
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-4 py-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 bg-white/50"
                       value={building}
                       onChange={(e) => {
                         setBuilding(e.target.value);
                         setFloor("");
                       }}
                     >
-                      <option value="">Select a building</option>
+                      <option value="">Choose a building</option>
                       <option value="ELHC Block">ELHC Block</option>
                       <option value="A Block">A Block</option>
                       <option value="B Block">B Block</option>
                       <option value="C Block">C Block</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Floor
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <FaKey className="mr-2 text-indigo-500" />
+                      Select Floor
                     </label>
                     <select
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-4 py-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 bg-white/50"
                       value={floor}
                       onChange={(e) => setFloor(e.target.value)}
                       disabled={!building}
                     >
                       <option value="">
-                        {building ? "Select a floor" : "Select a building first"}
+                        {building ? "Choose floor" : "Select building first"}
                       </option>
                       <option value="1st Floor">1st Floor</option>
                       <option value="2nd Floor">2nd Floor</option>
@@ -238,14 +248,14 @@ const BorrowKeys = () => {
                 </div>
 
                 {building && floor && (
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaSearch className="text-gray-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <FaSearch className="text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                     </div>
                     <input
                       type="text"
                       placeholder="Search classrooms..."
-                      className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="pl-12 w-full px-4 py-3 border-2 border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 bg-white/50"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -254,29 +264,33 @@ const BorrowKeys = () => {
               </div>
 
               {!building || !floor ? (
-                <div className="bg-white p-8 rounded-xl shadow-sm text-center">
-                  <div className="max-w-md mx-auto">
-                    <FaBuilding className="text-6xl text-indigo-200 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-gray-700 mb-2">
-                      Select a building and floor
+                <div className="bg-white/80 backdrop-blur-sm p-12 rounded-2xl shadow-xl border border-white/20 text-center">
+                  <div className="max-w-md mx-auto space-y-6">
+                    <div className="inline-flex p-4 bg-indigo-100 rounded-2xl">
+                      <FaBuilding className="text-5xl text-indigo-600" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-800">
+                      Let's Find Your Classroom
                     </h3>
-                    <p className="text-gray-500">
-                      Choose a building and floor to see available classrooms
+                    <p className="text-gray-500 text-lg">
+                      Start by selecting a building and floor to view available keys
                     </p>
                   </div>
                 </div>
               ) : loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                <div className="flex justify-center items-center h-64 space-x-4">
+                  <div className="animate-pulse bg-indigo-100 w-12 h-12 rounded-full"></div>
+                  <div className="animate-pulse bg-indigo-100 w-12 h-12 rounded-full delay-100"></div>
+                  <div className="animate-pulse bg-indigo-100 w-12 h-12 rounded-full delay-200"></div>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-4 bg-gray-50 border-b">
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Available Classrooms - {building}, {floor}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+                  <div className="p-6 bg-gradient-to-r from-indigo-600 to-blue-600">
+                    <h2 className="text-xl font-semibold text-white">
+                      {building} • {floor}
                     </h2>
                   </div>
-                  <ul className="divide-y divide-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                     {filteredClassrooms.length > 0 ? (
                       filteredClassrooms.map((room) => {
                         const hasKey = userHasKey(room.id);
@@ -285,84 +299,96 @@ const BorrowKeys = () => {
                         const requester = status?.requester;
                         
                         return (
-                          <li key={room.id} className="p-4 hover:bg-gray-50 transition-colors">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className={`font-medium ${
-                                  room.isAvailable === 1 ? "text-indigo-600" : "text-gray-600"
-                                }`}>
-                                  Room {room.classroomName}
-                                </span>
-                                <span className={`ml-2 inline-block px-2 py-1 text-xs rounded-full ${
-                                  room.isAvailable === 1 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                                }`}>
-                                  {room.isAvailable === 1 ? "Available" : "In Use"}
-                                </span>
-                                {hasKey && (
-                                  <span className="ml-2 inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                                    You have this key
+                          <div key={room.id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100/50">
+                            <div className="flex flex-col space-y-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className={`text-xl font-semibold ${
+                                    room.isAvailable === 1 ? "text-indigo-600" : "text-gray-600"
+                                  }`}>
+                                    {room.classroomName}
+                                  </h3>
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
+                                    room.isAvailable === 1 
+                                      ? "bg-green-100 text-green-800" 
+                                      : "bg-rose-100 text-rose-800"
+                                  }`}>
+                                    {room.isAvailable === 1 ? (
+                                      <><span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Available</>
+                                    ) : (
+                                      <><span className="w-2 h-2 bg-rose-500 rounded-full mr-2"></span>In Use</>
+                                    )}
                                   </span>
-                                )}
+                                </div>
+                                <div className="text-2xl text-indigo-100 bg-indigo-600 p-2 rounded-lg">
+                                  <FaKey />
+                                </div>
                               </div>
+
                               {room.isAvailable === 1 ? (
                                 <button
                                   onClick={() => handleBorrowClick(room)}
-                                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-colors flex items-center"
+                                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
                                 >
-                                  <FaKey className="mr-2" />
-                                  Borrow Key
+                                  <FaKey className="text-lg" />
+                                  <span>Borrow Key</span>
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => handleRequestAccess(room)}
                                   disabled={hasKey}
-                                  className={`px-4 py-2 rounded-lg flex items-center ${
+                                  className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg transition-all duration-200 ${
                                     hasKey
-                                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                      : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors"
+                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                      : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white hover:scale-[1.02]"
                                   }`}
                                 >
-                                  <FaLock className="mr-2" />
-                                  {hasKey ? "You have this key" : "Request Access"}
+                                  <FaLock className="text-lg" />
+                                  <span>{hasKey ? "Key in Possession" : "Request Access"}</span>
                                 </button>
                               )}
+
+                              {room.isAvailable === 0 && currentHolder && (
+                                <div className="mt-2 text-sm text-gray-500 flex items-center">
+                                  <FaUser className="mr-2 text-gray-400" />
+                                  <span>
+                                    Currently held by: {currentHolder.name}
+                                    {currentHolder.email && ` (${currentHolder.email})`}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {room.isAvailable === 0 && requester && !hasKey && (
+                                <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                  <FaInfoCircle className="mr-2 text-gray-400" />
+                                  <span>
+                                    Requested by: {requester.name}
+                                    {requester.email && ` (${requester.email})`}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {room.isAvailable === 0 && !currentHolder && !requester && (
+                                <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                  <FaInfoCircle className="mr-2 text-gray-400" />
+                                  <span>Key is currently unavailable</span>
+                                </div>
+                              )}
                             </div>
-                            
-                            {room.isAvailable === 0 && currentHolder && (
-                              <div className="mt-2 text-sm text-gray-500 flex items-center">
-                                <FaUser className="mr-2 text-gray-400" />
-                                <span>
-                                  Currently held by: {currentHolder.name}
-                                  {currentHolder.email && ` (${currentHolder.email})`}
-                                </span>
-                              </div>
-                            )}
-                            
-                            {room.isAvailable === 0 && requester && !hasKey && (
-                              <div className="mt-1 text-sm text-gray-500 flex items-center">
-                                <FaInfoCircle className="mr-2 text-gray-400" />
-                                <span>
-                                  Requested by: {requester.name}
-                                  {requester.email && ` (${requester.email})`}
-                                </span>
-                              </div>
-                            )}
-                            
-                            {room.isAvailable === 0 && !currentHolder && !requester && (
-                              <div className="mt-1 text-sm text-gray-500 flex items-center">
-                                <FaInfoCircle className="mr-2 text-gray-400" />
-                                <span>Key is currently unavailable</span>
-                              </div>
-                            )}
-                          </li>
+                          </div>
                         );
                       })
                     ) : (
-                      <li className="p-8 text-center text-gray-500">
-                        No classrooms found matching your search
-                      </li>
+                      <div className="col-span-full text-center p-8 space-y-4">
+                        <div className="text-6xl text-gray-300 mx-auto">
+                          <FaSearch />
+                        </div>
+                        <p className="text-xl text-gray-500 font-medium">
+                          No matching classrooms found
+                        </p>
+                      </div>
                     )}
-                  </ul>
+                  </div>
                 </div>
               )}
             </>
