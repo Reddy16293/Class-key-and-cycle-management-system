@@ -42,6 +42,90 @@ const StudentDashboard = () => {
     fetchCurrentUser();
   }, []);
 
+
+
+
+  useEffect(() => {
+    const fetchActiveBorrowings = async () => {
+      if (!currentUser?.id) return;
+
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/history/user/${currentUser.id}/active-borrowings`,
+          { withCredentials: true }
+        );
+        
+        const keys = response.data
+          .filter(item => item.classroomKey)
+          .map(item => ({
+            id: item.id,
+            name: item.classroomKey.classroomName,
+            blockName: item.classroomKey.blockName,
+            classroomNumber: item.classroomKey.classroomName,
+            since: new Date(item.borrowTime).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+
+        const bicycles = response.data
+          .filter(item => item.bicycle)
+          .map(item => ({
+            id: item.id,
+            name: item.bicycle.name,
+            since: new Date(item.borrowTime).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+
+        setActiveBorrows({ keys, bicycles });
+      } catch (error) {
+        console.error("Error fetching borrowings:", error);
+        setError("Failed to load active borrowings");
+      }
+    };
+
+    fetchActiveBorrowings();
+  }, [currentUser?.id]);
+
+  const handleReturn = async (borrowId) => {
+    try {
+      await axios.post(
+        `http://localhost:8080/api/history/return/${borrowId}`,
+        null,
+        { withCredentials: true }
+      );
+      setActiveBorrows(prev => ({
+        keys: prev.keys.filter(key => key.id !== borrowId),
+        bicycles: prev.bicycles.filter(bike => bike.id !== borrowId)
+      }));
+      alert("Item returned successfully");
+    } catch (error) {
+      console.error("Return error:", error);
+      alert("Failed to return item");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+      </div>
+    );
+  }
   // Rest of your component code remains the same...
   // [Previous useEffect for fetchActiveBorrowings]
   // [handleReturn function]
