@@ -1,80 +1,38 @@
-import { useState } from "react";
-import { 
-  FaKey, 
-  FaBicycle, 
-  FaSignOutAlt, 
-  FaHistory, 
-  FaInfoCircle, 
-  FaEnvelope, 
-  FaHome,
-  FaQrcode
-} from "react-icons/fa";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { FaBicycle, FaQrcode } from "react-icons/fa";
 import { Camera } from "lucide-react";
-import { FiClock } from "react-icons/fi";
-import { IoMenu } from "react-icons/io5";
-import { useLocation, useNavigate } from "react-router-dom";
+import StudentSidebar from "./StudentSidebar";
 
 const BorrowBicycle = () => {
   const [bicycleCount, setBicycleCount] = useState(5);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true,
+        });
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Updated Sidebar to match BorrowKeys */}
-      <aside
-        className={`bg-gradient-to-b from-indigo-800 to-blue-900 shadow-xl flex flex-col p-4 ${
-          sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300`}
-      >
-        <button
-          className="mb-4 p-2 text-white hover:bg-indigo-700 rounded-full transition-colors self-start"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <IoMenu className="text-xl" />
-        </button>
-        {sidebarOpen && (
-          <h2 className="text-xl font-bold mb-6 text-white px-2">Student Portal</h2>
-        )}
-        <nav className="flex-1 space-y-1">
-          {[
-            { path: "/dashboard/student", icon: FaHome, label: "Dashboard" },
-            { path: "/borrowkeys", icon: FaKey, label: "Borrow Keys" },
-            { path: "/borrowbicycle", icon: FaBicycle, label: "Borrow Bicycles" },
-            { path: "/receivedrequests", icon: FaEnvelope, label: "Received Requests" },
-            { path: "/sentrequests", icon: FiClock, label: "Sent Requests" },
-            { path: "/viewhistory", icon: FaHistory, label: "View History" },
-            { path: "/s-about", icon: FaInfoCircle, label: "About" },
-          ].map((item) => (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`w-full py-3 flex items-center ${
-                sidebarOpen ? "px-4 text-left" : "px-2 justify-center"
-              } ${
-                location.pathname === item.path
-                  ? "bg-indigo-700 text-white"
-                  : "text-white/90 hover:bg-indigo-700/50"
-              } rounded-xl transition-all`}
-            >
-              <item.icon className={`${sidebarOpen ? "mr-3" : ""} flex-shrink-0`} />
-              {sidebarOpen && item.label}
-            </button>
-          ))}
-        </nav>
-        <button
-          onClick={() => navigate("/")}
-          className={`w-full py-3 flex items-center ${
-            sidebarOpen ? "px-4" : "px-2 justify-center"
-          } text-white/90 hover:bg-indigo-700/50 rounded-xl transition-all mt-auto`}
-        >
-          <FaSignOutAlt className={`${sidebarOpen ? "mr-3" : ""}`} />
-          {sidebarOpen && "Sign Out"}
-        </button>
-      </aside>
+      <StudentSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        user={currentUser}
+      />
 
-      {/* Main Content - No changes needed */}
       <main className="flex-1 p-8 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-2">
