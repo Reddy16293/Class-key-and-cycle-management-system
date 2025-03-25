@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaKey, FaBicycle, FaBuilding, FaLock, FaSearch } from "react-icons/fa";
+import { FaKey, FaBuilding, FaLock, FaSearch, FaUser, FaInfoCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
+import RequestModal from "./RequestModal";
 import ClassroomBookingModal from "./ClassroomBookingModal";
 
 const BorrowKeys = () => {
@@ -15,9 +16,9 @@ const BorrowKeys = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [keyStatuses, setKeyStatuses] = useState({});
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch current user's data on component mount
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -32,7 +33,6 @@ const BorrowKeys = () => {
     fetchCurrentUser();
   }, []);
 
-  // Process block name and floor
   const processBlockName = (blockName) => {
     return blockName.replace(" Block", "").trim();
   };
@@ -41,7 +41,6 @@ const BorrowKeys = () => {
     return floor.replace(/\D/g, "");
   };
 
-  // Fetch available rooms based on building and floor
   const fetchAvailableRooms = async (blockName, floor) => {
     setLoading(true);
     try {
@@ -56,15 +55,22 @@ const BorrowKeys = () => {
       if (Array.isArray(response.data)) {
         setClassrooms(response.data);
         
-        // Fetch key statuses for each classroom
         const statuses = {};
         for (const room of response.data) {
           if (room.isAvailable === 0) {
-            const statusResponse = await axios.get(
-              `http://localhost:8080/api/key-requests/request-details/${room.id}`,
-              { withCredentials: true }
-            );
-            statuses[room.id] = statusResponse.data;
+            try {
+              const statusResponse = await axios.get(
+                `http://localhost:8080/api/key-requests/request-details/${room.id}`,
+                { withCredentials: true }
+              );
+              statuses[room.id] = statusResponse.data;
+            } catch (error) {
+              console.error(`Error fetching status for room ${room.id}:`, error);
+              statuses[room.id] = { 
+                keyStatus: "Unavailable",
+                error: "Could not fetch details" 
+              };
+            }
           }
         }
         setKeyStatuses(statuses);
@@ -84,7 +90,6 @@ const BorrowKeys = () => {
     }
   }, [building, floor]);
 
-  // Handle borrowing a classroom key
   const handleBorrowClick = (room) => {
     setSelectedRoom({
       building,
@@ -122,28 +127,34 @@ const BorrowKeys = () => {
     }
   };
 
-  // Check if user already has the key
   const userHasKey = (keyId) => {
     if (!currentUser) return false;
     const status = keyStatuses[keyId];
     return status?.currentHolder?.id === currentUser.id;
   };
 
-  // Request access to a key booked by another student
-  const handleRequestAccess = async (keyId) => {
-    try {
-      if (userHasKey(keyId)) {
-        alert("You already have this key!");
-        return;
-      }
+  const handleRequestAccess = (room) => {
+    setSelectedRoom({
+      building,
+      floor,
+      room: room.classroomName,
+      keyId: room.id,
+    });
+    setShowRequestModal(true);
+  };
 
+  const handleSubmitRequest = async (requestData) => {
+    try {
       const response = await axios.post(
         "http://localhost:8080/api/key-requests/request",
         null,
         {
           params: {
             studentId: currentUser.id,
-            classroomKeyId: keyId,
+            classroomKeyId: selectedRoom.keyId,
+            startTime: requestData.startTime,
+            endTime: requestData.endTime,
+            purpose: requestData.purpose
           },
           withCredentials: true,
         }
@@ -151,13 +162,14 @@ const BorrowKeys = () => {
 
       alert(response.data);
       fetchAvailableRooms(building, floor);
+      setShowRequestModal(false);
+      setSelectedRoom(null);
     } catch (error) {
       console.error("Error requesting access:", error);
       alert("Failed to request access. Please try again.");
     }
   };
 
-  // Filter classrooms based on search term
   const filteredClassrooms = classrooms.filter((room) =>
     room.classroomName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -172,7 +184,7 @@ const BorrowKeys = () => {
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 max-w-6xl mx-auto">
-          {!selectedRoom ? (
+          {!selectedRoom && !showRequestModal ? (
             <>
               <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -183,7 +195,6 @@ const BorrowKeys = () => {
                 </p>
               </div>
 
-              {/* Building and Floor Selection */}
               <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
@@ -242,7 +253,6 @@ const BorrowKeys = () => {
                 )}
               </div>
 
-              {/* Classroom List */}
               {!building || !floor ? (
                 <div className="bg-white p-8 rounded-xl shadow-sm text-center">
                   <div className="max-w-md mx-auto">
@@ -270,6 +280,10 @@ const BorrowKeys = () => {
                     {filteredClassrooms.length > 0 ? (
                       filteredClassrooms.map((room) => {
                         const hasKey = userHasKey(room.id);
+                        const status = keyStatuses[room.id] || {};
+                        const currentHolder = status?.currentHolder;
+                        const requester = status?.requester;
+                        
                         return (
                           <li key={room.id} className="p-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between">
@@ -300,7 +314,7 @@ const BorrowKeys = () => {
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => handleRequestAccess(room.id)}
+                                  onClick={() => handleRequestAccess(room)}
                                   disabled={hasKey}
                                   className={`px-4 py-2 rounded-lg flex items-center ${
                                     hasKey
@@ -313,9 +327,31 @@ const BorrowKeys = () => {
                                 </button>
                               )}
                             </div>
-                            {room.isAvailable === 0 && !hasKey && keyStatuses[room.id]?.requester && (
-                              <div className="mt-2 text-sm text-gray-500">
-                                Currently requested by: {keyStatuses[room.id].requester.name}
+                            
+                            {room.isAvailable === 0 && currentHolder && (
+                              <div className="mt-2 text-sm text-gray-500 flex items-center">
+                                <FaUser className="mr-2 text-gray-400" />
+                                <span>
+                                  Currently held by: {currentHolder.name}
+                                  {currentHolder.email && ` (${currentHolder.email})`}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {room.isAvailable === 0 && requester && !hasKey && (
+                              <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                <FaInfoCircle className="mr-2 text-gray-400" />
+                                <span>
+                                  Requested by: {requester.name}
+                                  {requester.email && ` (${requester.email})`}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {room.isAvailable === 0 && !currentHolder && !requester && (
+                              <div className="mt-1 text-sm text-gray-500 flex items-center">
+                                <FaInfoCircle className="mr-2 text-gray-400" />
+                                <span>Key is currently unavailable</span>
                               </div>
                             )}
                           </li>
@@ -330,6 +366,16 @@ const BorrowKeys = () => {
                 </div>
               )}
             </>
+          ) : showRequestModal ? (
+            <RequestModal
+              selectedRoom={selectedRoom}
+              handleSubmit={handleSubmitRequest}
+              handleCancel={() => {
+                setShowRequestModal(false);
+                setSelectedRoom(null);
+              }}
+              userId={currentUser?.id}
+            />
           ) : (
             <ClassroomBookingModal
               selectedRoom={selectedRoom}
