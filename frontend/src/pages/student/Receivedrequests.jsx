@@ -17,6 +17,29 @@ const ReceivedRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const navigate = useNavigate();
 
+  // Validate and normalize request data
+  const normalizeRequest = (request) => {
+    return {
+      id: request.id || 0,
+      status: request.status || 'UNKNOWN',
+      requestTime: request.requestTime || new Date().toISOString(),
+      startTime: request.startTime,
+      endTime: request.endTime,
+      purpose: request.purpose || '',
+      student: request.student || {
+        id: 0,
+        name: 'Unknown Student',
+        email: ''
+      },
+      classroomKey: request.classroomKey || {
+        id: 0,
+        blockName: 'Unknown Block',
+        classroomName: 'Unknown Classroom',
+        floor: 'Unknown Floor'
+      }
+    };
+  };
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -27,13 +50,14 @@ const ReceivedRequests = () => {
       } catch (error) {
         console.error("Error fetching current user:", error);
         setError("Failed to load user data");
+        setLoading(false);
       }
     };
     fetchCurrentUser();
   }, []);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
 
     const fetchReceivedRequests = async () => {
       try {
@@ -41,8 +65,15 @@ const ReceivedRequests = () => {
           `http://localhost:8080/api/key-requests/received-requests/${currentUser.id}`,
           { withCredentials: true }
         );
-        setRequests(response.data);
+        
+        // Normalize all requests to ensure consistent structure
+        const normalizedRequests = Array.isArray(response.data) 
+          ? response.data.map(normalizeRequest)
+          : [];
+        
+        setRequests(normalizedRequests);
       } catch (error) {
+        console.error("Error fetching requests:", error);
         setError(error.response?.data?.message || "Failed to fetch requests");
       } finally {
         setLoading(false);
@@ -110,11 +141,33 @@ const ReceivedRequests = () => {
   };
 
   const handleViewDetails = (request) => {
-    setSelectedRequest(request);
+    setSelectedRequest(normalizeRequest(request));
   };
 
   const handleCloseDetails = () => {
     setSelectedRequest(null);
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      PENDING: { bg: "bg-yellow-100", text: "text-yellow-800", label: "PENDING" },
+      APPROVED: { bg: "bg-green-100", text: "text-green-800", label: "APPROVED" },
+      DECLINED: { bg: "bg-red-100", text: "text-red-800", label: "DECLINED" },
+      TRANSFER_INITIATED: { bg: "bg-purple-100", text: "text-purple-800", label: "TRANSFER INITIATED" },
+      TRANSFER_COMPLETED: { bg: "bg-teal-100", text: "text-teal-800", label: "TRANSFER COMPLETED" },
+    };
+
+    const { bg, text, label } = statusMap[status] || { 
+      bg: "bg-gray-100", 
+      text: "text-gray-800", 
+      label: status || "UNKNOWN" 
+    };
+
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
+        {label}
+      </span>
+    );
   };
 
   if (loading) {
@@ -198,23 +251,7 @@ const ReceivedRequests = () => {
                           {request.classroomKey.blockName} - {request.classroomKey.classroomName}
                         </h2>
                         <div className="flex items-center mt-2">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              request.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : request.status === "APPROVED"
-                                ? "bg-green-100 text-green-800"
-                                : request.status === "DECLINED"
-                                ? "bg-red-100 text-red-800"
-                                : request.status === "TRANSFER_INITIATED"
-                                ? "bg-purple-100 text-purple-800"
-                                : request.status === "TRANSFER_COMPLETED"
-                                ? "bg-teal-100 text-teal-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {request.status.replace(/_/g, ' ')}
-                          </span>
+                          {getStatusBadge(request.status)}
                         </div>
                       </div>
                       <button
@@ -385,23 +422,7 @@ const ReceivedRequests = () => {
                     <FaHistory className="mr-2 text-blue-500" />
                     Status
                   </h4>
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-medium ${
-                      selectedRequest.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : selectedRequest.status === "APPROVED"
-                        ? "bg-green-100 text-green-800"
-                        : selectedRequest.status === "DECLINED"
-                        ? "bg-red-100 text-red-800"
-                        : selectedRequest.status === "TRANSFER_INITIATED"
-                        ? "bg-purple-100 text-purple-800"
-                        : selectedRequest.status === "TRANSFER_COMPLETED"
-                        ? "bg-teal-100 text-teal-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {selectedRequest.status.replace(/_/g, ' ')}
-                  </span>
+                  {getStatusBadge(selectedRequest.status)}
                 </div>
               </div>
             </div>
