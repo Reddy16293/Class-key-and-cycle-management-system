@@ -138,4 +138,3 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
      
     
 }
-
