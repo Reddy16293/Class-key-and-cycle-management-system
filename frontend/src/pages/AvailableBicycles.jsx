@@ -1,23 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Bike, ArrowLeft, CheckCircle, QrCode } from 'lucide-react';
+import { Bike, ArrowLeft, CheckCircle, QrCode, MapPin, Filter } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { DataTable } from '../components/ui/data-table';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import toast from 'react-hot-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 
 const AvailableBicycles = () => {
   const navigate = useNavigate();
   const [bicycles, setBicycles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
+  // Fetch unique locations from API
+  const fetchLocations = async () => {
+    setLoadingLocations(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/bicycles/all');
+      const uniqueLocations = [...new Set(response.data.map(bike => bike.location))];
+      setLocations(uniqueLocations);
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      toast.error('Failed to fetch locations');
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
 
   // Fetch available bicycles from API
   const fetchAvailableBicycles = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8080/api/admin/available-bicycles');
+      let response;
+      if (selectedLocation === 'all') {
+        response = await axios.get('http://localhost:8080/api/bicycles/available');
+      } else {
+        response = await axios.get(`http://localhost:8080/api/bicycles/available-at-location?location=${selectedLocation}`);
+      }
       setBicycles(response.data);
     } catch (error) {
       console.error('Error fetching available bicycles:', error);
@@ -28,13 +58,17 @@ const AvailableBicycles = () => {
   };
 
   useEffect(() => {
-    fetchAvailableBicycles();
+    fetchLocations();
   }, []);
+
+  useEffect(() => {
+    fetchAvailableBicycles();
+  }, [selectedLocation]);
 
   // Handle marking a bicycle as borrowed
   const handleMarkAsBorrowed = async (bicycleId) => {
     try {
-      await axios.put(`http://localhost:8080/api/admin/mark-bicycle-borrowed/${bicycleId}`);
+      await axios.put(`http://localhost:8080/api/bicycles/${bicycleId}/availability?available=false`);
       toast.success('Bicycle marked as borrowed successfully');
       fetchAvailableBicycles(); // Refresh the list
     } catch (error) {
@@ -51,6 +85,16 @@ const AvailableBicycles = () => {
         <div className="flex items-center gap-2">
           <QrCode size={16} className="text-gray-500" />
           <span className="font-mono text-sm">{bicycle.qrCode}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      cell: (bicycle) => (
+        <div className="flex items-center gap-2">
+          <MapPin size={16} className="text-gray-500" />
+          <span>{bicycle.location}</span>
         </div>
       ),
     },
@@ -115,16 +159,60 @@ const AvailableBicycles = () => {
           </div>
 
           <div className="bg-white shadow-lg rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Available Bicycles</h2>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <h2 className="text-xl font-semibold">Available Bicycles</h2>
+              <div className="flex items-center gap-3">
+                <Filter size={18} className="text-gray-500" />
+                <Select
+                  value={selectedLocation}
+                  onValueChange={setSelectedLocation}
+                  disabled={loadingLocations}
+                >
+                  <SelectTrigger className="w-[180px] bg-white">
+                    <SelectValue placeholder="Filter by location" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        Location {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <p className="text-gray-600 mb-4">
-              These bicycles are currently available for borrowing. Click on "Mark as Borrowed" to update their status.
+              {selectedLocation === 'all' 
+                ? 'These bicycles are currently available for borrowing across all locations.'
+                : `Showing available bicycles at Location ${selectedLocation}.`}
             </p>
 
             {loading ? (
               <p className="text-gray-500">Loading bicycles...</p>
+            ) : bicycles.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">
+                  {selectedLocation === 'all'
+                    ? 'No bicycles currently available'
+                    : `No bicycles available at Location ${selectedLocation}`}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => setSelectedLocation('all')}
+                >
+                  View All Locations
+                </Button>
+              </div>
             ) : (
               <div className="w-full overflow-x-auto">
-                <DataTable columns={columns} data={bicycles} searchField="qrCode" />
+                <DataTable 
+                  columns={columns} 
+                  data={bicycles} 
+                  searchField="qrCode" 
+                  searchPlaceholder="Search by QR code..."
+                />
               </div>
             )}
           </div>

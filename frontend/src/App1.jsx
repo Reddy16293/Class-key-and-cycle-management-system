@@ -31,6 +31,7 @@ import ViewHistory_nonCR from "./pages/student_nonCR/Viewhistory_nonCR";
 import About_nonCR from "./pages/student_nonCR/About_nonCR";
 
 import About_admin from "./pages/admin/About_admin";
+import BicycleLocations from "./pages/admin/BicycleLocations.jsx";
 
 
 // import UserDetails from "./UserDetails";
@@ -55,6 +56,8 @@ const App1 = () => {
         <Route path="/admin/all-keys" element={<AllKeys/>} />
         <Route path="/admin/all-bicycles" element={<AllBicycles/>} />
         <Route path="/admin/assign-cr" element={<AssignCR/>} />
+        <Route path="/admin/bicycle-locations" element={<BicycleLocations/>} />
+        
         <Route path="/admin/user-management" element={<UserManagement/>} />
         <Route path="/admin/profile" element={<Profile/>} />
         <Route path="/admin/about" element={<About_admin/>} />
@@ -68,6 +71,7 @@ const App1 = () => {
         <Route path="/borrowbicycle_nonCR" element={<BorrowBicycle_nonCR/>} />
         <Route path="/viewhistory_nonCR" element={<ViewHistory_nonCR/>} />
         <Route path="/s-about_nonCR" element={<About_nonCR/>} />
+        
 
 
         {/* <Route path="/dashboard/admin" element={<h2 className="text-center text-3xl mt-10">Welcome Admin</h2>} /> */}

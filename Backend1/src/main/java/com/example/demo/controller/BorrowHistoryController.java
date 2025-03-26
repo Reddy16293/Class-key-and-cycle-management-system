@@ -40,6 +40,7 @@ public class BorrowHistoryController {
 
     @Autowired
     private UserRepository userRepository;
+
     // ✅ API to get all borrowing history
     @GetMapping("/all")
     public ResponseEntity<List<BorrowHistory>> getAllBorrowHistory() {
@@ -47,17 +48,59 @@ public class BorrowHistoryController {
         return ResponseEntity.ok(historyList);
     }
 
-    // ✅ API to get borrowing history for a specific user
+    // ✅ API to get borrowing history for a specific user (both bicycles and keys)
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BorrowHistory>> getUserBorrowHistory(@PathVariable Long userId) {
         List<BorrowHistory> historyList = borrowHistoryRepository.findByStudentId(userId);
         return ResponseEntity.ok(historyList);
     }
     
+    // ✅ Get user's bicycle borrow history only
+    @GetMapping("/user/{userId}/bicycles")
+    public ResponseEntity<List<BorrowHistory>> getUserBicycleHistory(@PathVariable Long userId) {
+        List<BorrowHistory> bicycleHistory = borrowHistoryRepository.findByStudentIdAndBicycleIsNotNull(userId);
+        return ResponseEntity.ok(bicycleHistory);
+    }
+
+    // ✅ Get user's classroom key borrow history only
+    @GetMapping("/user/{userId}/classroom-keys")
+    public ResponseEntity<List<BorrowHistory>> getUserClassroomKeyHistory(@PathVariable Long userId) {
+        List<BorrowHistory> keyHistory = borrowHistoryRepository.findByStudentIdAndClassroomKeyIsNotNull(userId);
+        return ResponseEntity.ok(keyHistory);
+    }
+    
     @GetMapping("/user/{userId}/active-borrowings")
     public ResponseEntity<List<BorrowHistory>> getActiveBorrowings(@PathVariable Long userId) {
         List<BorrowHistory> activeBorrowings = borrowHistoryRepository.findByStudentIdAndIsReturnedFalse(userId);
         return ResponseEntity.ok(activeBorrowings);
+    }
+
+    // ✅ Active bicycle borrowings only
+    @GetMapping("/user/{userId}/active-bicycles")
+    public ResponseEntity<List<BorrowHistory>> getActiveBicycleBorrowings(@PathVariable Long userId) {
+        List<BorrowHistory> activeBicycles = borrowHistoryRepository.findByStudentIdAndBicycleIsNotNullAndIsReturnedFalse(userId);
+        return ResponseEntity.ok(activeBicycles);
+    }
+
+    // ✅ Active classroom key borrowings only
+    @GetMapping("/user/{userId}/active-keys")
+    public ResponseEntity<List<BorrowHistory>> getActiveKeyBorrowings(@PathVariable Long userId) {
+        List<BorrowHistory> activeKeys = borrowHistoryRepository.findByStudentIdAndClassroomKeyIsNotNullAndIsReturnedFalse(userId);
+        return ResponseEntity.ok(activeKeys);
+    }
+
+    // ✅ All bicycle borrow history
+    @GetMapping("/bicycles")
+    public ResponseEntity<List<BorrowHistory>> getAllBicycleHistory() {
+        List<BorrowHistory> bicycleHistory = borrowHistoryRepository.findByBicycleIsNotNull();
+        return ResponseEntity.ok(bicycleHistory);
+    }
+
+    // ✅ All classroom key borrow history
+    @GetMapping("/classroom-keys")
+    public ResponseEntity<List<BorrowHistory>> getAllClassroomKeyHistory() {
+        List<BorrowHistory> keyHistory = borrowHistoryRepository.findByClassroomKeyIsNotNull();
+        return ResponseEntity.ok(keyHistory);
     }
     
     @PostMapping("/return/{borrowId}")
@@ -94,4 +137,3 @@ public class BorrowHistoryController {
         return ResponseEntity.ok("Item returned successfully");
     }
 }
-

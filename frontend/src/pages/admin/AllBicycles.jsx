@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Bike, ArrowLeft, CheckCircle, XCircle, Edit, Trash, QrCode } from 'lucide-react';
+import { Bike, ArrowLeft, CheckCircle, XCircle, Edit, Trash, QrCode, MapPin, Filter } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { DataTable } from '../../components/ui/data-table';
 import Sidebar from '../../components/Sidebar';
@@ -15,42 +15,81 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../../components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 
 const AllBicycles = () => {
   const navigate = useNavigate();
   const [bicycles, setBicycles] = useState([]);
+  const [allBicycles, setAllBicycles] = useState([]); // Store all bicycles for filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [bicycleToDelete, setBicycleToDelete] = useState(null); // Bicycle to delete
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Delete confirmation dialog
+  const [bicycleToDelete, setBicycleToDelete] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [loadingLocations, setLoadingLocations] = useState(false);
 
-  // Fetch all bicycles
+  // Fetch all bicycles and locations
   useEffect(() => {
-    axios.get('http://localhost:8080/api/admin/all-bicycles')
-      .then(response => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setLoadingLocations(true);
+        
+        const response = await axios.get('http://localhost:8080/api/bicycles/all');
+        setAllBicycles(response.data);
         setBicycles(response.data);
+        
+        // Extract unique locations
+        const uniqueLocations = [...new Set(response.data.map(bike => bike.location))];
+        setLocations(uniqueLocations);
+        
         setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching bicycles:', error);
+        setLoadingLocations(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
         setError('Failed to load bicycles. Please try again.');
         setLoading(false);
-      });
+        setLoadingLocations(false);
+      }
+    };
+
+    fetchData();
   }, []);
+
+  // Filter bicycles by location
+  useEffect(() => {
+    if (selectedLocation === 'all') {
+      setBicycles(allBicycles);
+    } else {
+      const filtered = allBicycles.filter(bike => bike.location === selectedLocation);
+      setBicycles(filtered);
+    }
+  }, [selectedLocation, allBicycles]);
 
   // Handle marking a bicycle as borrowed/available
   const handleToggleAvailability = async (bicycleId, isAvailable) => {
     try {
-      const endpoint = isAvailable
-        ? `http://localhost:8080/api/admin/mark-bicycle-borrowed/${bicycleId}`
-        : `http://localhost:8080/api/admin/mark-bicycle-available/${bicycleId}`;
-      await axios.put(endpoint);
-      toast.success(`Bicycle marked as ${isAvailable ? 'borrowed' : 'available'} successfully`);
-      setBicycles((prevBicycles) =>
-        prevBicycles.map((bicycle) =>
-          bicycle.id === bicycleId ? { ...bicycle, isAvailable: !isAvailable } : bicycle
-        )
+      await axios.put(
+        `http://localhost:8080/api/bicycles/${bicycleId}/availability`,
+        null,
+        { params: { available: !isAvailable } }
       );
+      toast.success(`Bicycle marked as ${!isAvailable ? 'available' : 'borrowed'} successfully`);
+      
+      // Update both allBicycles and bicycles state
+      setAllBicycles(prev => prev.map(bike => 
+        bike.id === bicycleId ? { ...bike, isAvailable: !isAvailable } : bike
+      ));
+      setBicycles(prev => prev.map(bike => 
+        bike.id === bicycleId ? { ...bike, isAvailable: !isAvailable } : bike
+      ));
     } catch (error) {
       console.error('Error toggling bicycle availability:', error);
       toast.error('Failed to update bicycle status');
@@ -62,11 +101,15 @@ const AllBicycles = () => {
     if (!bicycleToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/admin/delete-bicycle/${bicycleToDelete.id}`);
+      await axios.delete(`http://localhost:8080/api/bicycles/${bicycleToDelete.id}`);
       toast.success('Bicycle deleted successfully');
-      setBicycles((prevBicycles) => prevBicycles.filter((bicycle) => bicycle.id !== bicycleToDelete.id));
-      setShowDeleteDialog(false); // Close the dialog
-      setBicycleToDelete(null); // Reset the bicycle to delete
+      
+      // Update both allBicycles and bicycles state
+      setAllBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
+      setBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
+      
+      setShowDeleteDialog(false);
+      setBicycleToDelete(null);
     } catch (error) {
       console.error('Error deleting bicycle:', error);
       toast.error('Failed to delete bicycle');
@@ -82,6 +125,16 @@ const AllBicycles = () => {
         <div className="flex items-center gap-2">
           <QrCode size={16} className="text-gray-500" />
           <span className="font-mono text-sm">{bicycle.qrCode}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      cell: (bicycle) => (
+        <div className="flex items-center gap-2">
+          <MapPin size={16} className="text-gray-500" />
+          <span>{bicycle.location}</span>
         </div>
       ),
     },
@@ -109,7 +162,12 @@ const AllBicycles = () => {
       header: 'Actions',
       cell: (bicycle) => (
         <div className="flex items-center gap-2">
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-8 w-8 text-blue-600"
+            onClick={() => navigate(`/admin/edit-bicycle/${bicycle.id}`)}
+          >
             <Edit size={16} />
           </Button>
           <Button
@@ -117,8 +175,8 @@ const AllBicycles = () => {
             variant="ghost"
             className="h-8 w-8 text-red-600"
             onClick={() => {
-              setBicycleToDelete(bicycle); // Set the bicycle to delete
-              setShowDeleteDialog(true); // Show the confirmation dialog
+              setBicycleToDelete(bicycle);
+              setShowDeleteDialog(true);
             }}
           >
             <Trash size={16} />
@@ -157,17 +215,65 @@ const AllBicycles = () => {
           </div>
 
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium mb-4">All Bicycles</h2>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <h2 className="text-lg font-medium">All Bicycles</h2>
+              <div className="flex items-center gap-3">
+                <Filter size={18} className="text-gray-500" />
+                <Select
+                  value={selectedLocation}
+                  onValueChange={setSelectedLocation}
+                  disabled={loadingLocations}
+                >
+                  <SelectTrigger className="w-[180px] bg-white">
+                    <SelectValue placeholder="Filter by location" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        Location {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <p className="text-gray-600 mb-6">
-              Complete list of all bicycles in the system. You can filter, edit, or update their status.
+              {selectedLocation === 'all' 
+                ? 'Complete list of all bicycles in the system.'
+                : `Showing bicycles at Location ${selectedLocation}.`}
             </p>
+
             {loading ? (
               <p className="text-gray-600">Loading bicycles...</p>
             ) : error ? (
               <p className="text-red-500">{error}</p>
+            ) : bicycles.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">
+                  {selectedLocation === 'all'
+                    ? 'No bicycles found'
+                    : `No bicycles found at Location ${selectedLocation}`}
+                </p>
+                {selectedLocation !== 'all' && (
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setSelectedLocation('all')}
+                  >
+                    View All Locations
+                  </Button>
+                )}
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <DataTable columns={columns} data={bicycles} searchField="qrCode" className="w-full min-w-[640px]" />
+                <DataTable 
+                  columns={columns} 
+                  data={bicycles} 
+                  searchField="qrCode" 
+                  searchPlaceholder="Search by QR code..."
+                  className="w-full min-w-[640px]" 
+                />
               </div>
             )}
           </div>
@@ -176,10 +282,10 @@ const AllBicycles = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="bg-red-100">
+        <DialogContent className="bg-white">
           <DialogHeader>
-            <DialogTitle className="text-xl text-red-700">Confirm Deletion</DialogTitle>
-            <DialogDescription className="text-base mt-4 text-red-600">
+            <DialogTitle className="text-xl">Confirm Deletion</DialogTitle>
+            <DialogDescription className="text-base mt-4">
               Are you sure you want to delete the bicycle with QR Code <strong>{bicycleToDelete?.qrCode}</strong>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
