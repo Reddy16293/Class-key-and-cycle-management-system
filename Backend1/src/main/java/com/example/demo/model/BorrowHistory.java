@@ -31,6 +31,12 @@ public class BorrowHistory {
 
     @Column
     private String feedback;
+
+    @Column
+    private String conditionDescription; // Changed from conditionRating
+
+    @Column
+    private Integer experienceRating; // Keep star rating for experience
     
     @Column(nullable = false)
     private Boolean isReturned = false;  // Default value set to false
@@ -100,4 +106,22 @@ public class BorrowHistory {
     public void setFeedback(String feedback) {
         this.feedback = feedback;
     }
+   
+
+	public String getConditionDescription() {
+		return conditionDescription;
+	}
+
+	public void setConditionDescription(String conditionDescription) {
+		this.conditionDescription = conditionDescription;
+	}
+
+	public Integer getExperienceRating() {
+		return experienceRating;
+	}
+
+	public void setExperienceRating(Integer experienceRating) {
+		this.experienceRating = experienceRating;
+	}
+    
 }

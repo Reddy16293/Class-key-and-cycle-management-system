@@ -13,7 +13,10 @@ import {
   FaExchangeAlt,
   FaCheckCircle,
   FaTimesCircle,
-  FaQrcode
+  FaQrcode,
+  FaInfoCircle,
+  FaStar,
+  FaTimes
 } from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +36,8 @@ const ViewHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,14 +61,25 @@ const ViewHistory = () => {
         axios.get(`http://localhost:8080/api/history/user/${userId}/classroom-keys`, {
           withCredentials: true
         }),
-        axios.get(`http://localhost:8080/api/history/user/${userId}/bicycles`, {
+        axios.get(`http://localhost:8080/api/feedback/user/${userId}`, {
           withCredentials: true
         })
       ]);
 
+      // Handle both paginated and non-paginated responses
+      const getDataArray = (response) => {
+        if (response.data.content) {
+          return response.data.content;
+        }
+        if (Array.isArray(response.data)) {
+          return response.data;
+        }
+        return [];
+      };
+
       setHistoryData({
-        keys: keysResponse.data,
-        bicycles: bicyclesResponse.data
+        keys: getDataArray(keysResponse),
+        bicycles: getDataArray(bicyclesResponse)
       });
       setError(null);
     } catch (error) {
@@ -93,6 +109,8 @@ const ViewHistory = () => {
   };
 
   const filterData = (data) => {
+    if (!Array.isArray(data)) return [];
+    
     return data.filter(item => {
       // Status filter
       if (statusFilter === "returned" && !item.returnTime) return false;
@@ -264,9 +282,6 @@ const ViewHistory = () => {
                   <li 
                     key={index} 
                     className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      // You could add a detail view here if needed
-                    }}
                   >
                     <div className="px-6 py-4">
                       <div className="flex items-center justify-between">
@@ -345,10 +360,18 @@ const ViewHistory = () => {
                               </div>
                             </div>
                             
-                            {entry.feedback && (
-                              <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                                <span className="font-medium">Your Feedback:</span> {entry.feedback}
-                              </div>
+                            {activeTab === "bicycles" && (entry.conditionDescription || entry.experienceRating) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedFeedback(entry);
+                                  setIsFeedbackModalOpen(true);
+                                }}
+                                className="mt-2 flex items-center text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                <FaInfoCircle className="mr-1" />
+                                View Feedback Details
+                              </button>
                             )}
                           </div>
                         </div>
@@ -361,6 +384,81 @@ const ViewHistory = () => {
           </div>
         </div>
       </div>
+
+      {/* Feedback Details Modal */}
+      {isFeedbackModalOpen && selectedFeedback && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Feedback Details
+                </h3>
+                <button
+                  onClick={() => setIsFeedbackModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <FaTimes className="text-xl" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-700">Bicycle Information</h4>
+                  <p className="text-gray-600">
+                    {selectedFeedback.bicycle?.name || 'Unknown'} - {selectedFeedback.bicycle?.brand || ''} {selectedFeedback.bicycle?.model || ''}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700">Borrowed</h4>
+                    <p className="text-gray-600">
+                      {formatDateTime(selectedFeedback.borrowTime)}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-700">Returned</h4>
+                    <p className="text-gray-600">
+                      {formatDateTime(selectedFeedback.returnTime) || 'Not returned'}
+                    </p>
+                  </div>
+                </div>
+                
+                {selectedFeedback.experienceRating && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Experience Rating</h4>
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <FaStar
+                          key={i}
+                          className={`text-xl ${
+                            i < selectedFeedback.experienceRating
+                              ? 'text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-gray-600">
+                        ({selectedFeedback.experienceRating}/5)
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedFeedback.conditionDescription && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Condition Notes</h4>
+                    <p className="text-gray-600 whitespace-pre-wrap">
+                      {selectedFeedback.conditionDescription}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

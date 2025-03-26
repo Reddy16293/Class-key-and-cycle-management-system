@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaBicycle, FaQrcode, FaMapMarkerAlt } from "react-icons/fa";
 import { Camera, CheckCircle, XCircle } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import "react-toastify/dist/ReactToastify.css";
 import StudentSidebar from "./StudentSidebar";
 import {

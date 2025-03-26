@@ -32,6 +32,7 @@ import About_nonCR from "./pages/student_nonCR/About_nonCR";
 
 import About_admin from "./pages/admin/About_admin";
 import BicycleLocations from "./pages/admin/BicycleLocations.jsx";
+import AdminFeedback from "./pages/admin/AdminFeedback.jsx";
 
 
 // import UserDetails from "./UserDetails";
@@ -57,6 +58,7 @@ const App1 = () => {
         <Route path="/admin/all-bicycles" element={<AllBicycles/>} />
         <Route path="/admin/assign-cr" element={<AssignCR/>} />
         <Route path="/admin/bicycle-locations" element={<BicycleLocations/>} />
+        <Route path="/admin/feedback" element={<AdminFeedback/>} />
         
         <Route path="/admin/user-management" element={<UserManagement/>} />
         <Route path="/admin/profile" element={<Profile/>} />
