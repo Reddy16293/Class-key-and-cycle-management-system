@@ -101,22 +101,50 @@ const AllBicycles = () => {
     if (!bicycleToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/bicycles/${bicycleToDelete.id}`);
-      toast.success('Bicycle deleted successfully');
-      
-      // Update both allBicycles and bicycles state
-      setAllBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
-      setBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
-      
-      setShowDeleteDialog(false);
-      setBicycleToDelete(null);
+        setLoading(true);
+        await axios.delete(
+            `http://localhost:8080/api/admin/delete-bicycle/${bicycleToDelete.id}`,
+            {
+                withCredentials: true // If you need authentication
+            }
+        );
+        
+        toast.success('Bicycle deleted successfully');
+        
+        // Update state to remove the deleted bicycle
+        setAllBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
+        setBicycles(prev => prev.filter(bike => bike.id !== bicycleToDelete.id));
+        
+        setShowDeleteDialog(false);
+        setBicycleToDelete(null);
     } catch (error) {
-      console.error('Error deleting bicycle:', error);
-      toast.error('Failed to delete bicycle');
+        console.error('Error deleting bicycle:', error);
+        
+        if (error.response) {
+            // Handle different error statuses
+            switch (error.response.status) {
+                case 401:
+                    toast.error('Unauthorized - Please login as admin');
+                    break;
+                case 403:
+                    toast.error('Forbidden - Admin access required');
+                    break;
+                case 404:
+                    toast.error('Bicycle not found');
+                    break;
+                case 500:
+                    toast.error(error.response.data || 'Server error occurred');
+                    break;
+                default:
+                    toast.error('Failed to delete bicycle');
+            }
+        } else {
+            toast.error('Network error - Could not connect to server');
+        }
+    } finally {
+        setLoading(false);
     }
-  };
-
-  // Table columns
+}; // Table columns
   const columns = [
     {
       key: 'qrCode',

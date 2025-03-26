@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaBicycle, FaQrcode, FaMapMarkerAlt } from "react-icons/fa";
-import { Camera, CheckCircle, XCircle } from "lucide-react";
+import { Camera } from "lucide-react";
 import { toast } from "react-hot-toast";
-import "react-toastify/dist/ReactToastify.css";
 import StudentSidebar from "./StudentSidebar";
 import {
   Select,
@@ -16,6 +15,12 @@ import {
 import { Button } from "../../components/ui/button";
 import { DataTable } from "../../components/ui/data-table";
 
+// Configure axios instance
+const api = axios.create({
+  baseURL: "http://localhost:8080/api",
+  withCredentials: true,
+});
+
 const BorrowBicycle = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
@@ -25,50 +30,77 @@ const BorrowBicycle = () => {
   const [loading, setLoading] = useState(true);
   const [qrInput, setQrInput] = useState("");
   const [showScanner, setShowScanner] = useState(false);
+  const [hasActiveBicycle, setHasActiveBicycle] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch current user
-        const userResponse = await axios.get("http://localhost:8080/api/user", {
-          withCredentials: true,
-        });
+        const userResponse = await api.get("/user");
         setCurrentUser(userResponse.data);
 
-        // Fetch all locations
-        const locationsResponse = await axios.get("http://localhost:8080/api/bicycles/all");
+        // Check for active bicycles
+        if (userResponse.data?.id) {
+          try {
+            const activeBicycles = await api.get(`/history/user/${userResponse.data.id}/active-bicycles`);
+            setHasActiveBicycle(activeBicycles.data.length > 0);
+          } catch (error) {
+            console.error("Error checking active bicycles:", error);
+            if (error.response?.status === 401) {
+              navigate("/login");
+              toast.error("Session expired. Please login again.");
+              return;
+            }
+            toast.error("Could not verify active bicycles");
+          }
+        }
+
+        // Fetch locations
+        const locationsResponse = await api.get("/bicycles/all");
         const uniqueLocations = [...new Set(locationsResponse.data.map(b => b.location))];
         setLocations(uniqueLocations);
-
-        // Fetch available bicycles
-        await fetchAvailableBicycles();
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load data");
+        console.error("Initial data fetch error:", error);
+        if (error.response?.status === 401) {
+          navigate("/login");
+          toast.error("Please login to continue");
+        } else {
+          toast.error("Failed to load initial data");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
+
+  // Fetch bicycles when location changes
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchAvailableBicycles();
+    }
+  }, [selectedLocation, currentUser]);
 
   const fetchAvailableBicycles = async () => {
     try {
       setLoading(true);
-      let response;
-      if (selectedLocation === "all") {
-        response = await axios.get("http://localhost:8080/api/bicycles/available");
-      } else {
-        response = await axios.get(
-          `http://localhost:8080/api/bicycles/available-at-location?location=${selectedLocation}`
-        );
-      }
+      const endpoint = selectedLocation === "all" 
+        ? "/bicycles/available" 
+        : `/bicycles/available-at-location?location=${selectedLocation}`;
+      
+      const response = await api.get(endpoint);
       setAvailableBicycles(response.data);
     } catch (error) {
       console.error("Error fetching bicycles:", error);
-      toast.error("Failed to load available bicycles");
+      if (error.response?.status === 401) {
+        navigate("/login");
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to load available bicycles");
+      }
     } finally {
       setLoading(false);
     }
@@ -80,36 +112,50 @@ const BorrowBicycle = () => {
       return;
     }
 
+    if (hasActiveBicycle) {
+      toast.error("You already have an active bicycle. Return it before borrowing another.");
+      return;
+    }
+
     try {
-      const response = await axios.post(
-        `http://localhost:8080/api/bicycles/book-by-qr?qrCode=${qrInput}&userId=${currentUser.id}`
-      );
+      await api.post(`/bicycles/book-by-qr?qrCode=${qrInput}&userId=${currentUser.id}`);
       toast.success("Bicycle booked successfully!");
       setQrInput("");
+      setHasActiveBicycle(true);
       fetchAvailableBicycles();
     } catch (error) {
-      console.error("Error booking bicycle:", error);
-      if (error.response?.status === 400) {
-        toast.error("This bicycle is not available for booking");
+      console.error("Booking error:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+        toast.error("Session expired. Please login again.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data || "This bicycle is not available");
       } else {
-        toast.error(error.response?.data || "Failed to book bicycle");
+        toast.error("Failed to book bicycle");
       }
     }
   };
 
   const handleBookById = async (bicycleId) => {
+    if (hasActiveBicycle) {
+      toast.error("You already have an active bicycle. Return it before borrowing another.");
+      return;
+    }
+
     try {
-      const response = await axios.post(
-        `http://localhost:8080/api/bicycles/book/${bicycleId}?userId=${currentUser.id}`
-      );
+      await api.post(`/bicycles/book/${bicycleId}?userId=${currentUser.id}`);
       toast.success("Bicycle booked successfully!");
+      setHasActiveBicycle(true);
       fetchAvailableBicycles();
     } catch (error) {
-      console.error("Error booking bicycle:", error);
-      if (error.response?.status === 400) {
-        toast.error("This bicycle is not available for booking");
+      console.error("Booking error:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+        toast.error("Session expired. Please login again.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data || "This bicycle is not available");
       } else {
-        toast.error(error.response?.data || "Failed to book bicycle");
+        toast.error("Failed to book bicycle");
       }
     }
   };
@@ -143,12 +189,21 @@ const BorrowBicycle = () => {
           size="sm"
           onClick={() => handleBookById(bicycle.id)}
           className="bg-indigo-600 hover:bg-indigo-700"
+          disabled={hasActiveBicycle || loading}
         >
-          Book This Bicycle
+          {hasActiveBicycle ? "Already Have a Bicycle" : "Book This Bicycle"}
         </Button>
       ),
     },
   ];
+
+  if (loading && !currentUser) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -159,6 +214,13 @@ const BorrowBicycle = () => {
       />
 
       <main className="flex-1 p-8 max-w-6xl mx-auto">
+        {hasActiveBicycle && (
+          <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded">
+            <p className="font-medium">You already have an active bicycle.</p>
+            <p>Return your current bicycle before borrowing another one.</p>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-2">
             Campus Bicycle Rental
@@ -205,21 +267,24 @@ const BorrowBicycle = () => {
                     onChange={(e) => setQrInput(e.target.value)}
                     placeholder="Enter QR code manually"
                     className="flex-1 p-3 border rounded-lg"
+                    disabled={hasActiveBicycle || loading}
                   />
                   <Button
                     onClick={handleBookByQr}
                     className="bg-indigo-600 hover:bg-indigo-700"
+                    disabled={hasActiveBicycle || loading}
                   >
-                    Book
+                    {hasActiveBicycle ? "Already Booked" : "Book"}
                   </Button>
                 </div>
                 <div className="text-center text-gray-500">or</div>
                 <Button
                   onClick={() => setShowScanner(true)}
                   className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-8 py-3 rounded-xl flex items-center justify-center hover:from-indigo-700 hover:to-blue-700 transition-all transform hover:scale-[1.02]"
+                  disabled={hasActiveBicycle || loading}
                 >
                   <Camera className="w-5 h-5 mr-2" />
-                  Scan QR Code
+                  {hasActiveBicycle ? "Already Booked" : "Scan QR Code"}
                 </Button>
               </div>
             )}
@@ -241,6 +306,7 @@ const BorrowBicycle = () => {
               <Select
                 value={selectedLocation}
                 onValueChange={setSelectedLocation}
+                disabled={hasActiveBicycle || loading}
               >
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select location" />
@@ -254,7 +320,12 @@ const BorrowBicycle = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={fetchAvailableBicycles}>Filter</Button>
+              <Button 
+                onClick={fetchAvailableBicycles}
+                disabled={hasActiveBicycle || loading}
+              >
+                Filter
+              </Button>
             </div>
 
             <div className="bg-indigo-100/80 p-4 rounded-xl">
@@ -281,7 +352,9 @@ const BorrowBicycle = () => {
             Available Bicycles
           </h2>
           {loading ? (
-            <p className="text-gray-500">Loading bicycles...</p>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+            </div>
           ) : availableBicycles.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">
@@ -297,6 +370,7 @@ const BorrowBicycle = () => {
                     setSelectedLocation("all");
                     fetchAvailableBicycles();
                   }}
+                  disabled={hasActiveBicycle || loading}
                 >
                   View All Locations
                 </Button>

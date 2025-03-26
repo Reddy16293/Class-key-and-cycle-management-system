@@ -6,8 +6,8 @@ import {
   FaLock, 
   FaSearch, 
   FaUser, 
-  FaInfoCircle, 
-  FaArrowRight 
+  FaInfoCircle,
+  FaClock
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
@@ -24,6 +24,7 @@ const BorrowKeys = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [keyStatuses, setKeyStatuses] = useState({});
+  const [pendingRequests, setPendingRequests] = useState({});
   const [showRequestModal, setShowRequestModal] = useState(false);
   const navigate = useNavigate();
 
@@ -64,24 +65,43 @@ const BorrowKeys = () => {
         setClassrooms(response.data);
         
         const statuses = {};
+        const pendingReqs = {};
+        
         for (const room of response.data) {
           if (room.isAvailable === 0) {
             try {
+              // Fetch key status and current holder info
               const statusResponse = await axios.get(
                 `http://localhost:8080/api/key-requests/request-details/${room.id}`,
                 { withCredentials: true }
               );
               statuses[room.id] = statusResponse.data;
+              
+              // Check if current user has pending request for this room
+              if (currentUser) {
+                try {
+                  const pendingResponse = await axios.get(
+                    `http://localhost:8080/api/key-requests/check-pending/${currentUser.id}/${room.id}`,
+                    { withCredentials: true }
+                  );
+                  pendingReqs[room.id] = pendingResponse.data.hasPendingRequest;
+                } catch (error) {
+                  console.error(`Error checking pending request for room ${room.id}:`, error);
+                  pendingReqs[room.id] = false;
+                }
+              }
             } catch (error) {
               console.error(`Error fetching status for room ${room.id}:`, error);
               statuses[room.id] = { 
                 keyStatus: "Unavailable",
                 error: "Could not fetch details" 
               };
+              pendingReqs[room.id] = false;
             }
           }
         }
         setKeyStatuses(statuses);
+        setPendingRequests(pendingReqs);
       } else {
         throw new Error("Invalid response format: Expected an array");
       }
@@ -93,10 +113,10 @@ const BorrowKeys = () => {
   };
 
   useEffect(() => {
-    if (building && floor) {
+    if (building && floor && currentUser) {
       fetchAvailableRooms(building, floor);
     }
-  }, [building, floor]);
+  }, [building, floor, currentUser]);
 
   const handleBorrowClick = (room) => {
     setSelectedRoom({
@@ -139,6 +159,10 @@ const BorrowKeys = () => {
     if (!currentUser) return false;
     const status = keyStatuses[keyId];
     return status?.currentHolder?.id === currentUser.id;
+  };
+
+  const userHasPendingRequest = (keyId) => {
+    return pendingRequests[keyId] === true;
   };
 
   const handleRequestAccess = (room) => {
@@ -294,6 +318,7 @@ const BorrowKeys = () => {
                     {filteredClassrooms.length > 0 ? (
                       filteredClassrooms.map((room) => {
                         const hasKey = userHasKey(room.id);
+                        const hasPendingRequest = userHasPendingRequest(room.id);
                         const status = keyStatuses[room.id] || {};
                         const currentHolder = status?.currentHolder;
                         const requester = status?.requester;
@@ -336,15 +361,25 @@ const BorrowKeys = () => {
                               ) : (
                                 <button
                                   onClick={() => handleRequestAccess(room)}
-                                  disabled={hasKey}
+                                  disabled={hasKey || hasPendingRequest}
                                   className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg transition-all duration-200 ${
-                                    hasKey
+                                    hasKey || hasPendingRequest
                                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                       : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white hover:scale-[1.02]"
                                   }`}
                                 >
-                                  <FaLock className="text-lg" />
-                                  <span>{hasKey ? "Key in Possession" : "Request Access"}</span>
+                                  {hasPendingRequest ? (
+                                    <FaClock className="text-lg" />
+                                  ) : (
+                                    <FaLock className="text-lg" />
+                                  )}
+                                  <span>
+                                    {hasKey 
+                                      ? "Key in Possession" 
+                                      : hasPendingRequest
+                                        ? "Request Pending"
+                                        : "Request Access"}
+                                  </span>
                                 </button>
                               )}
 
@@ -358,8 +393,6 @@ const BorrowKeys = () => {
                                 </div>
                               )}
                               
-
-                              {/* if room available */}
                               {room.isAvailable === 0 && requester && !hasKey && (
                                 <div className="mt-1 text-sm text-gray-500 flex items-center">
                                   <FaInfoCircle className="mr-2 text-gray-400" />
@@ -374,6 +407,13 @@ const BorrowKeys = () => {
                                 <div className="mt-1 text-sm text-gray-500 flex items-center">
                                   <FaInfoCircle className="mr-2 text-gray-400" />
                                   <span>Key is currently unavailable</span>
+                                </div>
+                              )}
+
+                              {hasPendingRequest && (
+                                <div className="mt-1 text-sm text-blue-500 flex items-center">
+                                  <FaInfoCircle className="mr-2 text-blue-400" />
+                                  <span>You already have a pending request for this key</span>
                                 </div>
                               )}
                             </div>
@@ -394,7 +434,6 @@ const BorrowKeys = () => {
                 </div>
               )}
             </>
-
           ) : showRequestModal ? (
             <RequestModal
               selectedRoom={selectedRoom}

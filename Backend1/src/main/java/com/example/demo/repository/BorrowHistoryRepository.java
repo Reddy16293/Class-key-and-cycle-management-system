@@ -26,7 +26,7 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Lo
     List<BorrowHistory> findByBicycleIdAndFeedbackNotNullOrderByBorrowTimeDesc(Long bicycleId);
     // Find by bicycle ID with condition description
     List<BorrowHistory> findByBicycleIdAndConditionDescriptionNotNullOrderByBorrowTimeDesc(Long bicycleId);
-    
+    boolean existsByBicycleIdAndIsReturnedFalse(Long bicycleId);
  // Find bicycle feedback by student ID
     Page<BorrowHistory> findByStudent_IdAndBicycleIsNotNullAndConditionDescriptionIsNotNull(
         Long studentId, Pageable pageable);

@@ -45,7 +45,6 @@ public class BorrowHistoryController {
     @Autowired
     private UserRepository userRepository;
     
-    
     @PostMapping("/return-with-feedback/{borrowId}")
     public ResponseEntity<String> returnWithFeedback(
             @PathVariable Long borrowId,
@@ -61,6 +60,11 @@ public class BorrowHistoryController {
             history.setFeedback(feedback);
             history.setConditionDescription(conditionDescription);
             history.setExperienceRating(experienceRating);
+            
+            // Update bicycle availability
+            Bicycle bicycle = history.getBicycle();
+            bicycle.setAvailable(true);
+            bicycleRepository.save(bicycle); // Save the updated bicycle status
         }
         
         // Mark as returned
@@ -70,8 +74,7 @@ public class BorrowHistoryController {
         borrowHistoryRepository.save(history);
         
         return ResponseEntity.ok("Item returned successfully with feedback");
-    }
-    
+    }    
     
 
     // ✅ API to get all borrowing history

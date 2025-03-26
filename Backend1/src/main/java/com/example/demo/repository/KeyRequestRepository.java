@@ -14,6 +14,12 @@ import org.springframework.data.repository.query.Param;
 public interface KeyRequestRepository extends JpaRepository<KeyRequest, Long> {
 	Optional<KeyRequest> findByClassroomKey(ClassroomKey classroomKey);
 	
+	 boolean existsByStudentIdAndClassroomKeyIdAndStatusIn(
+		        Long studentId, 
+		        Long classroomKeyId, 
+		        List<String> statuses
+		    );
+	
 	List<KeyRequest> findByClassroomKeyInAndStatus(List<ClassroomKey> classroomKeys, String status);
 	 @Query("SELECT kr FROM KeyRequest kr " +
 	           "JOIN kr.classroomKey ck " +
