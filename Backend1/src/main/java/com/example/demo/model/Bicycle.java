@@ -15,7 +15,10 @@ public class Bicycle {
 
     @Column(nullable = false)
     private boolean isAvailable;
-
+    
+    @Column(nullable = false)
+    private String location;
+    
     // Getters and Setters
     public Long getId() {
         return id;
@@ -39,5 +42,13 @@ public class Bicycle {
 
     public void setAvailable(boolean isAvailable) {
         this.isAvailable = isAvailable;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

@@ -17,6 +17,22 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Long> {
 
+	
+	 // Existing method
+	List<BorrowHistory> findByStudentIdAndBicycleIsNotNull(Long userId);
+    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNull(Long userId);
+    
+    // For bicycle-specific history
+    List<BorrowHistory> findByStudentIdAndBicycleIsNotNullAndIsReturnedFalse(Long userId);
+    
+    // For classroom key-specific history
+    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNullAndIsReturnedFalse(Long userId);
+    
+    // For all bicycle borrow history (active and returned)
+  
+    
+    // For all classroom key borrow history (active and returned)
+    List<BorrowHistory> findByClassroomKeyIsNotNull();
     // Fetch all key borrow history (where bicycle is null)
     List<BorrowHistory> findByBicycleIsNull();
 
