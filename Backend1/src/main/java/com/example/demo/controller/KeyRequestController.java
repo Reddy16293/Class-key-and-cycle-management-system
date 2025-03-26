@@ -39,6 +39,30 @@ public class KeyRequestController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    private static final String PENDING_STATUS = "PENDING";
+    private static final String APPROVED_STATUS = "APPROVED";
+
+
+    @GetMapping("/check-pending/{userId}/{keyId}")
+    public ResponseEntity<?> checkPendingRequest(
+        @PathVariable Long userId, 
+        @PathVariable Long keyId
+    ) {
+        try {
+            // Check if there's any request with PENDING or APPROVED status
+            boolean hasPending = keyRequestRepository.existsByStudentIdAndClassroomKeyIdAndStatusIn(
+                userId, 
+                keyId, 
+                Arrays.asList(PENDING_STATUS, APPROVED_STATUS)
+            );
+            
+            return ResponseEntity.ok(Collections.singletonMap("hasPendingRequest", hasPending));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to check pending requests"));
+        }
+    }
 
     // API to request a key from one classroom to another
  // Request a key with time and purpose

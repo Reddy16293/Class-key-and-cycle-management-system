@@ -5,6 +5,7 @@ import com.example.demo.model.BorrowHistory;
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
 import com.example.demo.repository.BicycleRepository;
+import com.example.demo.repository.BorrowHistoryRepository;
 import com.example.demo.repository.ClassroomKeyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AdminService;
@@ -12,6 +13,7 @@ import com.example.demo.service.StudentService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,9 @@ public class AdminController {
 	    private ClassroomKeyRepository classroomKeyRepository;
 	  @Autowired
 	    private BicycleRepository bicycleRepository;
+	  @Autowired
+	  BorrowHistoryRepository borrowHistoryRepository;
+	  
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -340,10 +345,14 @@ public class AdminController {
  @DeleteMapping("/delete-bicycle/{bicycleId}")
  public ResponseEntity<?> deleteBicycle(@PathVariable Long bicycleId) {
      try {
+         if (!bicycleRepository.existsById(bicycleId)) {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bicycle not found");
+         }
          bicycleRepository.deleteById(bicycleId);
          return ResponseEntity.ok("Bicycle deleted successfully");
      } catch (Exception e) {
-         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting bicycle");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error deleting bicycle: " + e.getMessage());
      }
  }
 
