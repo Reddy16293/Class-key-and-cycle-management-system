@@ -1,8 +1,12 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.BorrowHistory;
+
 import com.example.demo.model.ClassroomKey;
 import com.example.demo.model.User;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -18,15 +22,37 @@ import org.springframework.stereotype.Repository;
 public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, Long> {
 
 	
+	// Find feedback for specific bicycle
+    List<BorrowHistory> findByBicycleIdAndFeedbackNotNullOrderByBorrowTimeDesc(Long bicycleId);
+    // Find by bicycle ID with condition description
+    List<BorrowHistory> findByBicycleIdAndConditionDescriptionNotNullOrderByBorrowTimeDesc(Long bicycleId);
+    
+ // Find bicycle feedback by student ID
+    Page<BorrowHistory> findByStudent_IdAndBicycleIsNotNullAndConditionDescriptionIsNotNull(
+        Long studentId, Pageable pageable);
+    
+    // Find all bicycle feedback
+    Page<BorrowHistory> findByBicycleIsNotNullAndConditionDescriptionIsNotNull(Pageable pageable);
+    // Find bicycle feedback by student ID (corrected from userId to student_Id)
+    Page<BorrowHistory> findByStudent_IdAndBicycleIsNotNullAndFeedbackIsNotNull(
+        Long studentId, Pageable pageable);
+    
+ // Find all bicycle feedback
+    Page<BorrowHistory> findByBicycleIsNotNullAndFeedbackIsNotNull(Pageable pageable);
+    
+ // Custom query to find bicycle feedback by borrow ID
+    @Query("SELECT bh FROM BorrowHistory bh WHERE bh.id = :borrowId AND bh.bicycle IS NOT NULL")
+    BorrowHistory findBicycleFeedbackByBorrowId(@Param("borrowId") Long borrowId);
+    
 	 // Existing method
-	List<BorrowHistory> findByStudentIdAndBicycleIsNotNull(Long userId);
-    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNull(Long userId);
+	List<BorrowHistory> findByStudentIdAndBicycleIsNotNull(Long student_id);
+    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNull(Long student_id);
     
     // For bicycle-specific history
-    List<BorrowHistory> findByStudentIdAndBicycleIsNotNullAndIsReturnedFalse(Long userId);
+    List<BorrowHistory> findByStudentIdAndBicycleIsNotNullAndIsReturnedFalse(Long student_id);
     
     // For classroom key-specific history
-    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNullAndIsReturnedFalse(Long userId);
+    List<BorrowHistory> findByStudentIdAndClassroomKeyIsNotNullAndIsReturnedFalse(Long student_id);
     
     // For all bicycle borrow history (active and returned)
   
