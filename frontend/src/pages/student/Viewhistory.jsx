@@ -2,8 +2,18 @@ import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
-import { FaKey, FaBicycle, FaSearch, FaDownload, FaCalendarAlt, FaFilter } from "react-icons/fa";
-import { IoMenu } from "react-icons/io5";
+import {
+  FaKey,
+  FaBicycle,
+  FaHistory,
+  FaInfoCircle,
+  FaSearch,
+  FaDownload,
+  FaCalendarAlt,
+  FaFilter,
+  FaExchangeAlt
+} from "react-icons/fa";
+import { FiClock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
 
@@ -19,18 +29,55 @@ const ViewHistory = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch user and history data (keep your existing useEffect hooks)
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/user", {
+          withCredentials: true,
+        });
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  const fetchBorrowingHistory = async (userId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/history/user/${userId}`,
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching borrowing history:", error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (!currentUser?.id) return;
+
+        const history = await fetchBorrowingHistory(currentUser.id);
+        setHistoryData(history);
+        setError(null);
+      } catch (error) {
+        setError("Failed to load history data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentUser?.id]);
 
   const formatTime = (time) => {
-    if (!time) return <span className="text-red-500">Not Returned</span>;
+    if (!time) return "Not Returned";
     const date = new Date(time);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+    return date.toLocaleString();
   };
 
   const filteredHistory = historyData.filter((entry) => {
@@ -41,167 +88,172 @@ const ViewHistory = () => {
   });
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <StudentSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         user={currentUser}
       />
 
-      {/* Enhanced Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
-          <h1 className="text-3xl font-bold">Borrowing History</h1>
-          <p className="text-blue-100 mt-1">
-            Track all your key and bicycle transactions
-          </p>
-        </div>
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Borrowing History</h1>
+            <p className="text-gray-600">
+              Track all your key and bicycle borrowing activities
+            </p>
+          </div>
 
-        {/* Main Content Container */}
-        <div className="p-6 max-w-7xl mx-auto">
-          {/* Filters Card */}
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-              {/* Search */}
-              <div className="flex-1 relative">
+          {/* Filter Controls */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaSearch className="text-gray-400" />
                 </div>
                 <input
                   type="text"
                   placeholder="Search history..."
-                  className="pl-10 w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Date Filter */}
-              <div className="flex items-center space-x-2">
-                <FaCalendarAlt className="text-gray-500" />
-                <select
-                  className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={filterOption}
-                  onChange={(e) => setFilterOption(e.target.value)}
-                >
-                  <option value="all">All Time</option>
-                  <option value="date">Select Date</option>
-                </select>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex items-center">
+                  <FaFilter className="absolute left-3 text-gray-400" />
+                  <select
+                    className="appearance-none pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="returned">Returned</option>
+                    <option value="not_returned">Not Returned</option>
+                  </select>
+                </div>
+
+                <div className="relative flex items-center">
+                  <FaCalendarAlt className="absolute left-3 text-gray-400" />
+                  <select
+                    className="appearance-none pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={filterOption}
+                    onChange={(e) => setFilterOption(e.target.value)}
+                  >
+                    <option value="all">All Time</option>
+                    <option value="date">Select Date</option>
+                  </select>
+                </div>
+
                 {filterOption === "date" && (
                   <DatePicker
                     selected={selectedDate}
                     onChange={(date) => setSelectedDate(date)}
-                    className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholderText="Choose date"
                     isClearable
                   />
                 )}
-              </div>
 
-              {/* Status Filter */}
-              <div className="flex items-center space-x-2">
-                <FaFilter className="text-gray-500" />
-                <select
-                  className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="returned">Returned</option>
-                  <option value="not_returned">Not Returned</option>
-                </select>
+                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
+                  <FaDownload className="mr-2" />
+                  Export
+                </button>
               </div>
-
-              {/* Export Button */}
-              <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
-                <FaDownload />
-                <span>Export</span>
-              </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b mb-6">
+          <div className="flex border-b border-gray-200 mb-6">
             <button
-              className={`px-6 py-3 font-medium ${
+              className={`px-6 py-3 font-medium text-sm flex items-center ${
                 activeTab === "keys"
-                  ? "border-b-2 border-blue-600 text-blue-600"
+                  ? "border-b-2 border-blue-500 text-blue-600"
                   : "text-gray-500 hover:text-blue-500"
               } transition-colors`}
               onClick={() => setActiveTab("keys")}
             >
-              <div className="flex items-center space-x-2">
-                <FaKey />
-                <span>Keys</span>
-              </div>
+              <FaKey className="mr-2" /> Key History
             </button>
             <button
-              className={`px-6 py-3 font-medium ${
+              className={`px-6 py-3 font-medium text-sm flex items-center ${
                 activeTab === "bicycles"
-                  ? "border-b-2 border-blue-600 text-blue-600"
+                  ? "border-b-2 border-blue-500 text-blue-600"
                   : "text-gray-500 hover:text-blue-500"
               } transition-colors`}
               onClick={() => setActiveTab("bicycles")}
             >
-              <div className="flex items-center space-x-2">
-                <FaBicycle />
-                <span>Bicycles</span>
-              </div>
+              <FaBicycle className="mr-2" /> Bicycle History
             </button>
           </div>
 
           {/* History List */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             {loading ? (
               <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading your history...</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                <p className="mt-2 text-gray-600">Loading your history...</p>
               </div>
             ) : error ? (
               <div className="p-8 text-center text-red-500">{error}</div>
             ) : filteredHistory.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No history records found
+              <div className="p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <FaHistory className="text-gray-400 text-xl" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-700">No history found</h3>
+                <p className="text-gray-500 mt-1">
+                  {statusFilter === "all"
+                    ? "You don't have any borrowing history yet."
+                    : `No ${statusFilter.replace("_", " ")} items found.`}
+                </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <ul className="divide-y divide-gray-200">
                 {filteredHistory.map((entry, index) => (
-                  <div
-                    key={index}
-                    className="p-6 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="bg-blue-100 p-3 rounded-full">
-                          <FaKey className="text-blue-600 text-lg" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">
-                            {entry.classroomKey?.classroomName || 'Unknown Room'} - {entry.classroomKey?.blockName || 'Unknown Block'}
-                          </h3>
-                          <div className="mt-2 text-sm text-gray-600">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">Borrowed:</span>
-                              <span>{formatTime(entry.borrowTime)}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">Returned:</span>
-                              <span>{formatTime(entry.returnTime)}</span>
+                  <li key={index} className="hover:bg-gray-50 transition-colors">
+                    <div className="px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-3 rounded-lg ${
+                            entry.returnTime ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
+                          }`}>
+                            {activeTab === "keys" ? (
+                              <FaKey className="text-lg" />
+                            ) : (
+                              <FaBicycle className="text-lg" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {activeTab === "keys" 
+                                ? `Room ${entry.classroomKey?.classroomName || 'Unknown'} - ${entry.classroomKey?.blockName || 'Unknown'}`
+                                : `Bicycle ${entry.bicycle?.brand || 'Unknown'} - ${entry.bicycle?.model || 'Unknown'}`}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                              <span className="flex items-center">
+                                <FiClock className="mr-1" />
+                                Borrowed: {formatTime(entry.borrowTime)}
+                              </span>
+                              <span className="flex items-center">
+                                <FaExchangeAlt className="mr-1" />
+                                Returned: {formatTime(entry.returnTime)}
+                              </span>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          entry.returnTime ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          entry.returnTime 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {entry.returnTime ? 'Returned' : 'Pending Return'}
+                          {entry.returnTime ? "Returned" : "Active"}
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
         </div>
