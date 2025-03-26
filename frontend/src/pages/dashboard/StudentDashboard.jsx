@@ -3,9 +3,10 @@ import {
   FaKey, 
   FaBicycle, 
   FaUser,
-  FaEnvelope, // Added missing import
+  FaEnvelope,
   FaHistory,
-  FaInfoCircle
+  FaInfoCircle,
+  FaArrowRight
 } from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -42,10 +43,89 @@ const StudentDashboard = () => {
     fetchCurrentUser();
   }, []);
 
-  // Rest of your component code remains the same...
-  // [Previous useEffect for fetchActiveBorrowings]
-  // [handleReturn function]
-  // [Loading and error states]
+  useEffect(() => {
+    const fetchActiveBorrowings = async () => {
+      if (!currentUser?.id) return;
+
+      try {
+        // Fetch keys and bicycles separately using the new APIs
+        const [keysResponse, bicyclesResponse] = await Promise.all([
+          axios.get(
+            `http://localhost:8080/api/history/user/${currentUser.id}/active-keys`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `http://localhost:8080/api/history/user/${currentUser.id}/active-bicycles`,
+            { withCredentials: true }
+          )
+        ]);
+
+        const keys = keysResponse.data.map(item => ({
+          id: item.id,
+          blockName: item.classroomKey.blockName,
+          classroomNumber: item.classroomKey.classroomName,
+          since: new Date(item.borrowTime).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        const bicycles = bicyclesResponse.data.map(item => ({
+          id: item.id,
+          name: item.bicycle.name || `Bicycle #${item.bicycle.id}`,
+          since: new Date(item.borrowTime).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        setActiveBorrows({ keys, bicycles });
+      } catch (error) {
+        console.error("Error fetching borrowings:", error);
+        setError("Failed to load active borrowings");
+      }
+    };
+
+    fetchActiveBorrowings();
+  }, [currentUser?.id]);
+
+  const handleReturn = async (borrowId) => {
+    try {
+      await axios.post(
+        `http://localhost:8080/api/history/return/${borrowId}`,
+        null,
+        { withCredentials: true }
+      );
+      setActiveBorrows(prev => ({
+        keys: prev.keys.filter(key => key.id !== borrowId),
+        bicycles: prev.bicycles.filter(bike => bike.id !== borrowId)
+      }));
+      alert("Item returned successfully");
+    } catch (error) {
+      console.error("Return error:", error);
+      alert("Failed to return item");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -86,42 +166,67 @@ const StudentDashboard = () => {
         </div>
 
         {/* Active Borrows Section */}
-        {(activeBorrows.keys.length > 0 || activeBorrows.bicycles.length > 0) && (
-          <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800">Active Borrows</h2>
-            <div className="mt-4 space-y-3">
-              {activeBorrows.keys.map(key => (
-                <div key={key.id} className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow">
-                  <div className="flex flex-col">
-                    <span className="text-gray-700 font-medium">{key.name}</span>
-                    <span className="text-sm text-gray-500">Block: {key.blockName}, Room: {key.classroomNumber}</span>
-                    <span className="text-sm text-gray-500">Since {key.since}</span>
+        <div className="mt-6">
+          {/* Keys Section */}
+          {activeBorrows.keys.length > 0 && (
+            <div className="bg-white p-6 shadow-lg rounded-lg mb-6">
+              <div className="flex items-center mb-4">
+                <FaKey className="text-blue-500 text-xl mr-2" />
+                <h2 className="text-xl font-semibold text-gray-800">Borrowed Keys</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeBorrows.keys.map(key => (
+                  <div key={key.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-800">{key.blockName} - {key.classroomNumber}</h3>
+                        <p className="text-sm text-gray-500 mt-1 flex items-center">
+                          <FiClock className="mr-1" /> Borrowed {key.since}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleReturn(key.id)}
+                        className="text-blue-500 hover:text-blue-700 transition-colors flex items-center"
+                      >
+                        Return <FaArrowRight className="ml-1" />
+                      </button>
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => handleReturn(key.id)}
-                    className="text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    Return
-                  </button>
-                </div>
-              ))}
-              {activeBorrows.bicycles.map(bike => (
-                <div key={bike.id} className="p-4 border rounded-lg flex justify-between items-center hover:shadow-md transition-shadow">
-                  <div className="flex flex-col">
-                    <span className="text-gray-700 font-medium">{bike.name}</span>
-                    <span className="text-sm text-gray-500">Since {bike.since}</span>
-                  </div>
-                  <button 
-                    onClick={() => handleReturn(bike.id)}
-                    className="text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    Return
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Bicycles Section */}
+          {activeBorrows.bicycles.length > 0 && (
+            <div className="bg-white p-6 shadow-lg rounded-lg">
+              <div className="flex items-center mb-4">
+                <FaBicycle className="text-green-500 text-xl mr-2" />
+                <h2 className="text-xl font-semibold text-gray-800">Borrowed Bicycles</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeBorrows.bicycles.map(bike => (
+                  <div key={bike.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-800">Bicycle: {bike.name}</h3>
+                        <p className="text-sm text-gray-500 mt-1 flex items-center">
+                          <FiClock className="mr-1" /> Borrowed {bike.since}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleReturn(bike.id)}
+                        className="text-green-500 hover:text-green-700 transition-colors flex items-center"
+                      >
+                        Return <FaArrowRight className="ml-1" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

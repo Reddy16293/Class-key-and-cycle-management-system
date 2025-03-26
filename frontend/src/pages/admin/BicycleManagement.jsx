@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import axios from "axios";
-import { Bike, CheckCircle2, PlusCircle, List } from "lucide-react";
+import { Bike, CheckCircle2, PlusCircle, List, MapPin } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -20,7 +20,11 @@ const BicycleManagement = () => {
   const navigate = useNavigate();
   const [qrCode, setQrCode] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
+  const [location, setLocation] = useState("A");
   const [bicycles, setBicycles] = useState([]);
+
+  // Available locations
+  const locations = ["A", "B", "C", "D", "E"];
 
   // Fetch recently added bicycles
   const fetchRecentlyAddedBicycles = async () => {
@@ -51,7 +55,11 @@ const BicycleManagement = () => {
       await toast.promise(
         axios.post(
           "http://localhost:8080/api/admin/addbicycle",
-          { qrCode, isAvailable },
+          { 
+            qrCode, 
+            isAvailable,
+            location 
+          },
           { headers: { "Content-Type": "application/json" } }
         ),
         {
@@ -63,6 +71,7 @@ const BicycleManagement = () => {
 
       setQrCode("");
       setIsAvailable(true);
+      setLocation("A");
       fetchRecentlyAddedBicycles();
     } catch (error) {
       console.error("Error adding bicycle:", error);
@@ -101,6 +110,25 @@ const BicycleManagement = () => {
                       placeholder="Enter QR code"
                       required
                     />
+                  </div>
+
+                  <div className="mb-4">
+                    <Label htmlFor="location">Location</Label>
+                    <Select
+                      value={location}
+                      onValueChange={(value) => setLocation(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-amber-100">
+                        {locations.map((loc) => (
+                          <SelectItem key={loc} value={loc}>
+                            Location {loc}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="mb-4">
@@ -164,6 +192,22 @@ const BicycleManagement = () => {
                       </p>
                     </div>
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-auto py-6 flex flex-col items-center justify-center gap-3 border border-gray-300 hover:border-gray-400"
+                    onClick={() => navigate("/admin/bicycle-locations")}
+                  >
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-100">
+                      <MapPin className="text-orange-600" size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">View By Location</h3>
+                      <p className="text-sm text-gray-500">
+                        See bicycles by location
+                      </p>
+                    </div>
+                  </Button>
                 </div>
               </div>
 
@@ -182,7 +226,18 @@ const BicycleManagement = () => {
                       <div key={bicycle.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
                         <div className="flex items-center gap-3">
                           <Bike size={16} className="text-purple-600" />
-                          <span>{bicycle.qrCode} - {bicycle.isAvailable ? "Available" : "Not Available"}</span>
+                          <div>
+                            <p className="font-medium">{bicycle.qrCode}</p>
+                            <div className="flex gap-2 text-sm text-gray-500">
+                              <span className={`px-2 py-0.5 rounded-full ${bicycle.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {bicycle.isAvailable ? 'Available' : 'Not Available'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MapPin size={14} />
+                                {bicycle.location || 'No location'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -194,7 +249,7 @@ const BicycleManagement = () => {
             </div>
           </div>
         </div>
-      </div> 
+      </div>
     </div>
   );
 };
