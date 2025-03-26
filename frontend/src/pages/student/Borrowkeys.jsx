@@ -358,6 +358,8 @@ const BorrowKeys = () => {
                                 </div>
                               )}
                               
+
+                              {/* if room available */}
                               {room.isAvailable === 0 && requester && !hasKey && (
                                 <div className="mt-1 text-sm text-gray-500 flex items-center">
                                   <FaInfoCircle className="mr-2 text-gray-400" />
@@ -392,6 +394,7 @@ const BorrowKeys = () => {
                 </div>
               )}
             </>
+
           ) : showRequestModal ? (
             <RequestModal
               selectedRoom={selectedRoom}
